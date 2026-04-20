@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { signIn } from '@/lib/auth';
 
 // Single-tenant credentials. Update these values to change the login.
 const ACCOUNT_EMAIL = 'admin@limai.cn';
@@ -18,10 +19,12 @@ export default function LoginPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (email.trim() !== ACCOUNT_EMAIL || password !== ACCOUNT_PASSWORD) {
+    const normalizedEmail = email.trim();
+    if (normalizedEmail !== ACCOUNT_EMAIL || password !== ACCOUNT_PASSWORD) {
       setError('邮箱或密码错误，请重试。');
       return;
     }
+    signIn(normalizedEmail);
     setLoading(true);
     setTimeout(() => router.push('/dashboard'), 500);
   }

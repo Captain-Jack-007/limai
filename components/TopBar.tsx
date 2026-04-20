@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, Search, UserCircle2 } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { mockRisk } from '@/lib/mock-data';
+import UserMenu from './UserMenu';
 
 export default function TopBar() {
   return (
@@ -26,9 +27,7 @@ export default function TopBar() {
         <button className="btn-ghost" aria-label="通知">
           <Bell size={18} />
         </button>
-        <button className="btn-ghost" aria-label="账户">
-          <UserCircle2 size={20} />
-        </button>
+        <UserMenu />
       </div>
     </header>
   );
