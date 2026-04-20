@@ -95,7 +95,7 @@ export default function UploadPage() {
       <div>
         <h1 className="text-2xl font-semibold">上传企业数据</h1>
         <p className="text-sm text-slate-500">
-          上传 Excel / CSV 导出文件。MVP 阶段数据仅保留在本地。
+          上传 Excel / CSV 导出文件，系统将自动解析并进行风险分析。
         </p>
       </div>
 

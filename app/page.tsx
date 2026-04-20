@@ -53,7 +53,7 @@ export default function LoginPage() {
           </ul>
         </div>
         <div className="text-xs text-white/60">
-          MVP 原型 —— 不能替代专业税务建议。
+          © 2026 力迈 AI · 企业税务风险智能检测平台
         </div>
       </div>
 
