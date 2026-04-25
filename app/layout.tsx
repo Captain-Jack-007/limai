@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { LanguageProvider } from '@/components/LanguageProvider';
 
 export const metadata: Metadata = {
-  title: 'Sci-Bridge Agent · 科研成果商业化 AI',
+  title: 'Sci-Bridge Agent · 科研商业化智能体',
   description:
-    'GenAI agent for evaluating scientific research and generating commercialization outputs.',
+    'GenAI workspace for scientific commercialization — evaluation, investor matching and pitch deck generation. 面向科研成果转化的 GenAI 工作台。',
 };
 
 export default function RootLayout({
@@ -14,7 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans">
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

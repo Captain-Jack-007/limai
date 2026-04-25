@@ -1,34 +1,36 @@
 // ---------- Domain: scientific projects & commercialization ----------
 
+import type { Bi, DictKey } from './i18n';
+
 export type ProjectStage = 'idea' | 'lab' | 'prototype' | 'pilot' | 'scaling';
 
 export interface Project {
   id: string;
-  name: string;
-  field: string;
+  name: Bi;
+  field: Bi;
   stage: ProjectStage;
   updatedAt: string; // ISO
-  summary: string;
+  summary: Bi;
 }
 
 export interface ScoreMetric {
   key: string;
-  label: string;
+  label: Bi;
   value: number; // 0-10 or 0-100 depending on scale
   scale: 10 | 100;
-  hint?: string;
+  hint?: Bi;
 }
 
 export interface Evaluation {
   overview: {
-    field: string;
-    innovation: string;
-    application: string;
+    field: Bi;
+    innovation: Bi;
+    application: Bi;
   };
   scores: ScoreMetric[]; // TRL, market potential, etc.
-  insights: string[];
-  risks: string[];
-  nextSteps: string[];
+  insights: Bi[];
+  risks: Bi[];
+  nextSteps: Bi[];
 }
 
 // ---------- Chat ----------
@@ -37,7 +39,7 @@ export type ChatRole = 'user' | 'assistant' | 'system';
 
 export interface ChatAttachment {
   id: string;
-  name: string;
+  name: string; // filenames stay as-is
   size: number; // bytes
   kind: 'pdf' | 'ppt' | 'doc' | 'image';
 }
@@ -45,7 +47,7 @@ export interface ChatAttachment {
 export interface ChatMessage {
   id: string;
   role: ChatRole;
-  content: string;
+  content: Bi;
   attachments?: ChatAttachment[];
   createdAt: string; // ISO
 }
@@ -54,7 +56,7 @@ export interface ChatMessage {
 
 export interface AnalysisStep {
   key: string;
-  label: string;
+  label: Bi;
   durationMs: number;
 }
 
@@ -62,29 +64,29 @@ export interface AnalysisStep {
 
 export interface Investor {
   id: string;
-  name: string;
-  focus: string;
-  stage: string;
-  region: string;
-  ticket: string;
+  name: string; // proper noun, not translated
+  focus: Bi;
+  stage: Bi;
+  region: Bi;
+  ticket: Bi;
   matchScore: number; // 0-100
-  thesis: string;
+  thesis: Bi;
 }
 
 // ---------- Pitch deck ----------
 
 export interface PitchSlide {
   index: number;
-  title: string;
-  bullets: string[];
+  title: Bi;
+  bullets: Bi[];
 }
 
 // ---------- Roadmap ----------
 
 export interface RoadmapMilestone {
-  quarter: string;
-  title: string;
-  detail: string;
+  quarter: Bi;
+  title: Bi;
+  detail: Bi;
 }
 
 // ---------- File upload ----------
@@ -100,13 +102,10 @@ export interface UploadFileMeta {
 
 // ---------- Helpers ----------
 
-export function stageLabel(s: ProjectStage): string {
-  const map: Record<ProjectStage, string> = {
-    idea: 'Idea',
-    lab: 'Lab',
-    prototype: 'Prototype',
-    pilot: 'Pilot',
-    scaling: 'Scaling',
-  };
-  return map[s];
-}
+export const stageDictKey: Record<ProjectStage, DictKey> = {
+  idea: 'stage_idea',
+  lab: 'stage_lab',
+  prototype: 'stage_prototype',
+  pilot: 'stage_pilot',
+  scaling: 'stage_scaling',
+};

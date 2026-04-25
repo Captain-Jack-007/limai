@@ -9,6 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { mockEvaluation } from '@/lib/mock-data';
+import { useLang } from '@/components/LanguageProvider';
 
 function ScoreRow({
   label,
@@ -70,6 +71,7 @@ export default function StructuredPanel({
   populated: boolean;
   loading?: boolean;
 }) {
+  const { t, b } = useLang();
   const ev = mockEvaluation;
   if (!populated) {
     return (
@@ -79,11 +81,10 @@ export default function StructuredPanel({
             <Atom size={18} />
           </div>
           <div className="text-sm font-medium text-slate-700">
-            Structured output appears here
+            {t('sp_emptyTitle')}
           </div>
           <div className="text-xs text-slate-500 leading-relaxed">
-            Send a message or upload a paper. The agent will populate the
-            evaluation as it analyzes.
+            {t('sp_emptyDesc')}
           </div>
         </div>
       </div>
@@ -93,65 +94,69 @@ export default function StructuredPanel({
   return (
     <div className="p-5 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div className="font-semibold text-sm">Evaluation</div>
+        <div className="font-semibold text-sm">{t('sp_evaluation')}</div>
         {loading && (
           <span className="inline-flex items-center gap-1 text-[11px] text-brand-700">
-            <Loader2 size={12} className="animate-spin" /> updating
+            <Loader2 size={12} className="animate-spin" /> {t('sp_updating')}
           </span>
         )}
       </div>
 
-      <Section icon={Atom} title="Technology Overview">
+      <Section icon={Atom} title={t('sp_techOverview')}>
         <dl className="text-sm space-y-1.5">
           <div className="flex gap-2">
-            <dt className="text-slate-500 w-24 shrink-0">Field</dt>
-            <dd className="font-medium">{ev.overview.field}</dd>
+            <dt className="text-slate-500 w-24 shrink-0">{t('sp_field')}</dt>
+            <dd className="font-medium">{b(ev.overview.field)}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-slate-500 w-24 shrink-0">Innovation</dt>
-            <dd className="font-medium">{ev.overview.innovation}</dd>
+            <dt className="text-slate-500 w-24 shrink-0">
+              {t('sp_innovation')}
+            </dt>
+            <dd className="font-medium">{b(ev.overview.innovation)}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-slate-500 w-24 shrink-0">Application</dt>
-            <dd className="font-medium">{ev.overview.application}</dd>
+            <dt className="text-slate-500 w-24 shrink-0">
+              {t('sp_application')}
+            </dt>
+            <dd className="font-medium">{b(ev.overview.application)}</dd>
           </div>
         </dl>
       </Section>
 
-      <Section icon={Gauge} title="Evaluation Score">
+      <Section icon={Gauge} title={t('sp_evalScore')}>
         <div className="space-y-3">
           {ev.scores.map((s) => (
             <ScoreRow
               key={s.key}
-              label={s.label}
+              label={b(s.label)}
               value={s.value}
               scale={s.scale}
-              hint={s.hint}
+              hint={s.hint ? b(s.hint) : undefined}
             />
           ))}
         </div>
       </Section>
 
-      <Section icon={Lightbulb} title="Key Insights">
+      <Section icon={Lightbulb} title={t('sp_keyInsights')}>
         <ul className="text-sm space-y-1.5 text-slate-700 list-disc pl-4 marker:text-brand-500">
           {ev.insights.map((i) => (
-            <li key={i}>{i}</li>
+            <li key={i.en}>{b(i)}</li>
           ))}
         </ul>
       </Section>
 
-      <Section icon={AlertTriangle} title="Risks">
+      <Section icon={AlertTriangle} title={t('sp_risks')}>
         <ul className="text-sm space-y-1.5 text-slate-700 list-disc pl-4 marker:text-rose-400">
           {ev.risks.map((r) => (
-            <li key={r}>{r}</li>
+            <li key={r.en}>{b(r)}</li>
           ))}
         </ul>
       </Section>
 
-      <Section icon={ListChecks} title="Suggested Next Steps">
+      <Section icon={ListChecks} title={t('sp_nextSteps')}>
         <ol className="text-sm space-y-1.5 text-slate-700 list-decimal pl-4 marker:text-slate-400">
           {ev.nextSteps.map((n) => (
-            <li key={n}>{n}</li>
+            <li key={n.en}>{b(n)}</li>
           ))}
         </ol>
       </Section>

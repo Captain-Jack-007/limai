@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  Suspense,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Paperclip, ArrowUp, Zap, Sparkles } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
@@ -19,10 +13,12 @@ import {
   seedChat,
 } from '@/lib/mock-data';
 import type { ChatMessage } from '@/lib/types';
+import { useLang } from '@/components/LanguageProvider';
 
 function ChatWorkspace() {
   const params = useSearchParams();
   const seedQuery = params.get('q');
+  const { t } = useLang();
 
   const [messages, setMessages] = useState<ChatMessage[]>(seedChat);
   const [input, setInput] = useState('');
@@ -51,7 +47,12 @@ function ChatWorkspace() {
 
   function runDemo(text?: string) {
     const userMsg: ChatMessage = text
-      ? { ...demoUserMessage, id: `u-${Date.now()}`, content: text, attachments: undefined }
+      ? {
+          ...demoUserMessage,
+          id: `u-${Date.now()}`,
+          content: { en: text, zh: text },
+          attachments: undefined,
+        }
       : demoUserMessage;
     setMessages((m) => [...m, userMsg]);
     setThinking(true);
@@ -113,14 +114,18 @@ function ChatWorkspace() {
       <div className="flex-1 flex flex-col min-w-0 border-r border-slate-200">
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6">
           <div className="max-w-3xl mx-auto space-y-5">
-            {messages.map((m) => <ChatBubble key={m.id} msg={m} />)}
+            {messages.map((m) => (
+              <ChatBubble key={m.id} msg={m} />
+            ))}
             {thinking && (
               <div className="flex gap-3 animate-fade-in">
                 <div className="w-8 h-8 rounded-lg grid place-items-center shrink-0 bg-gradient-to-br from-brand-600 to-fuchsia-500 text-white">
                   <Sparkles size={14} />
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-slate-500">
-                  Thinking <span className="dot" /><span className="dot" /><span className="dot" />
+                  {t('chat_thinking')} <span className="dot" />
+                  <span className="dot" />
+                  <span className="dot" />
                 </div>
               </div>
             )}
@@ -139,25 +144,39 @@ function ChatWorkspace() {
                   }
                 }}
                 rows={2}
-                placeholder="Type your message…"
+                placeholder={t('chat_placeholder')}
                 className="w-full resize-none border-0 focus:ring-0 focus:outline-none text-[14.5px] px-2.5 py-1.5 bg-transparent placeholder:text-slate-400"
               />
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1">
-                  <button onClick={attachDemoFile} className="btn-ghost text-slate-500" title="Attach file">
+                  <button
+                    onClick={attachDemoFile}
+                    className="btn-ghost text-slate-500"
+                    title={t('chat_attach')}
+                  >
                     <Paperclip size={16} />
                   </button>
-                  <button onClick={runDeep} className="btn-outline border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100">
-                    <Zap size={14} /> Run Deep Analysis
+                  <button
+                    onClick={runDeep}
+                    className="btn-outline border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100"
+                  >
+                    <Zap size={14} /> {t('chat_runDeep')}
                   </button>
                 </div>
-                <button onClick={send} disabled={!input.trim()} className="btn-accent rounded-full !p-2" aria-label="Send">
+                <button
+                  onClick={send}
+                  disabled={!input.trim()}
+                  className="btn-accent rounded-full !p-2"
+                  aria-label={t('send')}
+                >
                   <ArrowUp size={16} />
                 </button>
               </div>
             </div>
             <div className="text-[11px] text-slate-400 text-center mt-2">
-              Sci-Bridge agent · {totalShown} message{totalShown === 1 ? '' : 's'} in this thread
+              {totalShown === 1
+                ? t('chat_thread_one')
+                : t('chat_thread_many').replace('{n}', String(totalShown))}
             </div>
           </div>
         </div>
@@ -177,9 +196,14 @@ function ChatWorkspace() {
   );
 }
 
+function ChatLoading() {
+  const { t } = useLang();
+  return <div className="p-6 text-sm text-slate-400">{t('loading')}</div>;
+}
+
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-slate-400">Loading…</div>}>
+    <Suspense fallback={<ChatLoading />}>
       <ChatWorkspace />
     </Suspense>
   );

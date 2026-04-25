@@ -3,6 +3,7 @@
 import { Check, Loader2, Sparkles, Download, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { deepAnalysisSteps } from '@/lib/mock-data';
+import { useLang } from '@/components/LanguageProvider';
 
 export default function DeepAnalysisOverlay({
   open,
@@ -15,6 +16,7 @@ export default function DeepAnalysisOverlay({
   done: boolean;
   onClose: () => void;
 }) {
+  const { t, b } = useLang();
   if (!open) return null;
   return (
     <div className="absolute inset-0 z-20 bg-white/85 backdrop-blur-sm grid place-items-center animate-fade-in">
@@ -24,11 +26,9 @@ export default function DeepAnalysisOverlay({
             <Sparkles size={14} />
           </div>
           <div>
-            <div className="font-semibold text-sm">Deep Analysis</div>
+            <div className="font-semibold text-sm">{t('da_title')}</div>
             <div className="text-[11px] text-slate-500">
-              {done
-                ? 'Analysis complete'
-                : 'Running multi-agent research pipeline…'}
+              {done ? t('da_done') : t('da_running')}
             </div>
           </div>
         </div>
@@ -39,8 +39,8 @@ export default function DeepAnalysisOverlay({
               i < stepIndex || done
                 ? 'done'
                 : i === stepIndex
-                  ? 'active'
-                  : 'pending';
+                ? 'active'
+                : 'pending';
             return (
               <li key={s.key} className="flex items-center gap-3 text-sm">
                 <span
@@ -49,8 +49,8 @@ export default function DeepAnalysisOverlay({
                     (status === 'done'
                       ? 'bg-emerald-500 text-white'
                       : status === 'active'
-                        ? 'bg-brand-100 text-brand-700'
-                        : 'bg-slate-100 text-slate-400')
+                      ? 'bg-brand-100 text-brand-700'
+                      : 'bg-slate-100 text-slate-400')
                   }
                 >
                   {status === 'done' ? (
@@ -66,7 +66,7 @@ export default function DeepAnalysisOverlay({
                     status === 'pending' ? 'text-slate-400' : 'text-slate-700'
                   }
                 >
-                  {s.label}
+                  {b(s.label)}
                 </span>
               </li>
             );
@@ -77,19 +77,17 @@ export default function DeepAnalysisOverlay({
           <div className="mt-5 pt-4 border-t border-slate-100 space-y-2 animate-fade-in">
             <div className="flex items-center gap-2 text-sm">
               <FileText size={14} className="text-brand-600" />
-              <span className="font-medium">
-                Full AI Report Generated
-              </span>
+              <span className="font-medium">{t('da_reportReady')}</span>
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               <Link href="/outputs?tab=report" className="btn-accent">
-                <Download size={14} /> Download PDF
+                <Download size={14} /> {t('da_downloadPdf')}
               </Link>
               <Link href="/outputs?tab=deck" className="btn-outline">
-                Export Pitch Deck
+                {t('da_exportDeck')}
               </Link>
               <button onClick={onClose} className="btn-ghost">
-                Close
+                {t('close')}
               </button>
             </div>
           </div>

@@ -10,25 +10,45 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { mockInvestors, activeProject } from '@/lib/mock-data';
+import { useLang } from '@/components/LanguageProvider';
+import type { DictKey } from '@/lib/i18n';
 
-const regions = ['All', 'China', 'Asia', 'Global', 'China / Global'];
+type RegionKey = 'all' | 'china' | 'asia' | 'global' | 'chinaGlobal';
+
+const regions: { key: RegionKey; labelKey: DictKey; matchEn: string }[] = [
+  { key: 'all', labelKey: 'inv_region_all', matchEn: '' },
+  { key: 'china', labelKey: 'inv_region_china', matchEn: 'China' },
+  { key: 'asia', labelKey: 'inv_region_asia', matchEn: 'Asia' },
+  { key: 'global', labelKey: 'inv_region_global', matchEn: 'Global' },
+  {
+    key: 'chinaGlobal',
+    labelKey: 'inv_region_chinaGlobal',
+    matchEn: 'China / Global',
+  },
+];
 
 export default function InvestorsPage() {
-  const [region, setRegion] = useState<string>('All');
+  const { t, b } = useLang();
+  const [region, setRegion] = useState<RegionKey>('all');
   const [q, setQ] = useState('');
 
   const list = useMemo(() => {
+    const target = regions.find((r) => r.key === region)?.matchEn ?? '';
     return mockInvestors
       .filter((i) =>
-        region === 'All' ? true : i.region.toLowerCase().includes(region.toLowerCase())
+        region === 'all'
+          ? true
+          : i.region.en.toLowerCase().includes(target.toLowerCase())
       )
       .filter((i) => {
         if (!q.trim()) return true;
         const s = q.toLowerCase();
         return (
           i.name.toLowerCase().includes(s) ||
-          i.focus.toLowerCase().includes(s) ||
-          i.thesis.toLowerCase().includes(s)
+          i.focus.en.toLowerCase().includes(s) ||
+          i.focus.zh.toLowerCase().includes(s) ||
+          i.thesis.en.toLowerCase().includes(s) ||
+          i.thesis.zh.toLowerCase().includes(s)
         );
       })
       .sort((a, b) => b.matchScore - a.matchScore);
@@ -38,37 +58,34 @@ export default function InvestorsPage() {
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       <header>
         <div className="inline-flex items-center gap-1.5 chip bg-brand-50 text-brand-700 ring-1 ring-brand-100 mb-2">
-          <Sparkles size={12} /> Matched for {activeProject.name}
+          <Sparkles size={12} /> {t('inv_matchedFor')} {b(activeProject.name)}
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Recommended Investors
+          {t('inv_title')}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Ranked by AI fit-score against your project's field, stage, and
-          ticket-size needs.
-        </p>
+        <p className="text-sm text-slate-500 mt-1">{t('inv_subhead')}</p>
       </header>
 
       <div className="card p-4 flex flex-wrap items-center gap-3">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name, focus or thesis…"
+          placeholder={t('inv_searchPlaceholder')}
           className="input flex-1 min-w-[240px]"
         />
         <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
           {regions.map((r) => (
             <button
-              key={r}
-              onClick={() => setRegion(r)}
+              key={r.key}
+              onClick={() => setRegion(r.key)}
               className={
                 'px-3 py-1.5 text-xs rounded-md transition-colors ' +
-                (region === r
+                (region === r.key
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900')
               }
             >
-              {r}
+              {t(r.labelKey)}
             </button>
           ))}
         </div>
@@ -87,7 +104,7 @@ export default function InvestorsPage() {
                     {inv.name}
                   </div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    {inv.focus}
+                    {b(inv.focus)}
                   </div>
                 </div>
               </div>
@@ -97,33 +114,33 @@ export default function InvestorsPage() {
                   <span className="text-sm text-slate-400">%</span>
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-slate-400 mt-1">
-                  Match
+                  {t('inv_match')}
                 </div>
               </div>
             </div>
 
             <div className="text-sm text-slate-600 leading-relaxed">
-              {inv.thesis}
+              {b(inv.thesis)}
             </div>
 
             <dl className="grid grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
               <div>
                 <dt className="text-slate-400 flex items-center gap-1 mb-0.5">
-                  <TrendingUp size={11} /> Stage
+                  <TrendingUp size={11} /> {t('inv_stage')}
                 </dt>
-                <dd className="font-medium text-slate-700">{inv.stage}</dd>
+                <dd className="font-medium text-slate-700">{b(inv.stage)}</dd>
               </div>
               <div>
                 <dt className="text-slate-400 flex items-center gap-1 mb-0.5">
-                  <Globe2 size={11} /> Region
+                  <Globe2 size={11} /> {t('inv_region')}
                 </dt>
-                <dd className="font-medium text-slate-700">{inv.region}</dd>
+                <dd className="font-medium text-slate-700">{b(inv.region)}</dd>
               </div>
               <div>
                 <dt className="text-slate-400 flex items-center gap-1 mb-0.5">
-                  <Target size={11} /> Ticket
+                  <Target size={11} /> {t('inv_ticket')}
                 </dt>
-                <dd className="font-medium text-slate-700">{inv.ticket}</dd>
+                <dd className="font-medium text-slate-700">{b(inv.ticket)}</dd>
               </div>
             </dl>
 
@@ -135,7 +152,7 @@ export default function InvestorsPage() {
                 />
               </div>
               <button className="btn-outline text-xs">
-                <Mail size={12} /> Draft outreach
+                <Mail size={12} /> {t('inv_outreach')}
               </button>
             </div>
           </article>

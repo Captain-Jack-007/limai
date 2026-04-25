@@ -2,29 +2,58 @@
 
 import { useState } from 'react';
 import { Bot, Gauge, Shield, Save, Sparkles } from 'lucide-react';
+import { useLang } from '@/components/LanguageProvider';
+import type { DictKey } from '@/lib/i18n';
 
 type Model = 'deepseek' | 'qwen' | 'openai';
 type Mode = 'fast' | 'standard' | 'deep';
 type Privacy = 'local' | 'cloud';
 
-const models: { value: Model; label: string; desc: string }[] = [
-  { value: 'deepseek', label: 'DeepSeek', desc: 'Fast reasoning, low cost.' },
-  { value: 'qwen', label: 'Qwen', desc: 'Bilingual EN/中, strong on Chinese context.' },
-  { value: 'openai', label: 'OpenAI', desc: 'Highest analytical depth, slower.' },
+type Option<T extends string> = {
+  value: T;
+  labelKey: DictKey;
+  descKey: DictKey;
+};
+
+const models: Option<Model>[] = [
+  {
+    value: 'deepseek',
+    labelKey: 'set_model_deepseek',
+    descKey: 'set_model_deepseek_desc',
+  },
+  { value: 'qwen', labelKey: 'set_model_qwen', descKey: 'set_model_qwen_desc' },
+  {
+    value: 'openai',
+    labelKey: 'set_model_openai',
+    descKey: 'set_model_openai_desc',
+  },
 ];
 
-const modes: { value: Mode; label: string; desc: string }[] = [
-  { value: 'fast', label: 'Fast', desc: 'Single-pass evaluation in ~10s.' },
-  { value: 'standard', label: 'Standard', desc: 'Balanced multi-step analysis.' },
-  { value: 'deep', label: 'Deep', desc: 'Patents + market + investor matching.' },
+const modes: Option<Mode>[] = [
+  { value: 'fast', labelKey: 'set_mode_fast', descKey: 'set_mode_fast_desc' },
+  {
+    value: 'standard',
+    labelKey: 'set_mode_standard',
+    descKey: 'set_mode_standard_desc',
+  },
+  { value: 'deep', labelKey: 'set_mode_deep', descKey: 'set_mode_deep_desc' },
 ];
 
-const privacy: { value: Privacy; label: string; desc: string }[] = [
-  { value: 'local', label: 'Local', desc: 'Files processed on-device only.' },
-  { value: 'cloud', label: 'Cloud', desc: 'Use hosted inference for richer outputs.' },
+const privacy: Option<Privacy>[] = [
+  {
+    value: 'local',
+    labelKey: 'set_priv_local',
+    descKey: 'set_priv_local_desc',
+  },
+  {
+    value: 'cloud',
+    labelKey: 'set_priv_cloud',
+    descKey: 'set_priv_cloud_desc',
+  },
 ];
 
 export default function SettingsPage() {
+  const { t } = useLang();
   const [model, setModel] = useState<Model>('deepseek');
   const [mode, setMode] = useState<Mode>('standard');
   const [priv, setPriv] = useState<Privacy>('cloud');
@@ -39,34 +68,34 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
       <header>
         <div className="inline-flex items-center gap-1.5 chip bg-brand-50 text-brand-700 ring-1 ring-brand-100 mb-2">
-          <Sparkles size={12} /> Model & privacy controls
+          <Sparkles size={12} /> {t('set_chip')}
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Tune the agent's underlying model, depth, and privacy mode.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t('set_title')}
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">{t('set_subhead')}</p>
       </header>
 
-      <Group icon={Bot} title="AI Model" hint="Backbone LLM used for evaluation and chat.">
+      <Group icon={Bot} title={t('set_aiModel')} hint={t('set_aiModelHint')}>
         <RadioGrid value={model} onChange={setModel} options={models} />
       </Group>
 
-      <Group icon={Gauge} title="Analysis Mode" hint="Trade-off between speed and depth.">
+      <Group icon={Gauge} title={t('set_mode')} hint={t('set_modeHint')}>
         <RadioGrid value={mode} onChange={setMode} options={modes} />
       </Group>
 
-      <Group icon={Shield} title="Data Privacy" hint="Where your uploaded papers are processed.">
+      <Group icon={Shield} title={t('set_privacy')} hint={t('set_privacyHint')}>
         <RadioGrid value={priv} onChange={setPriv} options={privacy} />
       </Group>
 
       <div className="flex items-center justify-end gap-3">
         {saved && (
           <span className="text-xs text-emerald-600 animate-fade-in">
-            ✓ Settings saved
+            {t('set_saved')}
           </span>
         )}
         <button onClick={save} className="btn-primary">
-          <Save size={14} /> Save changes
+          <Save size={14} /> {t('set_save')}
         </button>
       </div>
     </div>
@@ -107,8 +136,9 @@ function RadioGrid<T extends string>({
 }: {
   value: T;
   onChange: (v: T) => void;
-  options: { value: T; label: string; desc: string }[];
+  options: Option<T>[];
 }) {
+  const { t } = useLang();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
       {options.map((o) => {
@@ -125,7 +155,7 @@ function RadioGrid<T extends string>({
             }
           >
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">{o.label}</div>
+              <div className="text-sm font-medium">{t(o.labelKey)}</div>
               <span
                 className={
                   'w-3.5 h-3.5 rounded-full border-2 ' +
@@ -135,7 +165,7 @@ function RadioGrid<T extends string>({
                 }
               />
             </div>
-            <div className="text-xs text-slate-500 mt-1">{o.desc}</div>
+            <div className="text-xs text-slate-500 mt-1">{t(o.descKey)}</div>
           </button>
         );
       })}

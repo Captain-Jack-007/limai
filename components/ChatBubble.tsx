@@ -1,5 +1,8 @@
+'use client';
+
 import { Sparkles, FileText, User } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
+import { useLang } from '@/components/LanguageProvider';
 
 function fmtSize(b: number) {
   if (b > 1_000_000) return `${(b / 1_000_000).toFixed(1)} MB`;
@@ -8,10 +11,13 @@ function fmtSize(b: number) {
 }
 
 export default function ChatBubble({ msg }: { msg: ChatMessage }) {
+  const { b } = useLang();
   const isUser = msg.role === 'user';
   return (
     <div
-      className={`flex gap-3 animate-fade-in ${isUser ? 'flex-row-reverse' : ''}`}
+      className={`flex gap-3 animate-fade-in ${
+        isUser ? 'flex-row-reverse' : ''
+      }`}
     >
       <div
         className={
@@ -50,7 +56,7 @@ export default function ChatBubble({ msg }: { msg: ChatMessage }) {
             ))}
           </div>
         ) : null}
-        <div className="whitespace-pre-wrap">{msg.content}</div>
+        <div className="whitespace-pre-wrap">{b(msg.content)}</div>
       </div>
     </div>
   );
