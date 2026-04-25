@@ -1,4 +1,4 @@
-const KEY = 'limai-auth';
+const KEY = 'scibridge-auth';
 
 export function signIn(email: string) {
   if (typeof window === 'undefined') return;

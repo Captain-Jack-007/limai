@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '力迈 AI · 税务风险检测',
-  description: 'AI 驱动的中小企业税务风险检测与合规系统。',
+  title: 'Sci-Bridge Agent · 科研成果商业化 AI',
+  description:
+    'GenAI agent for evaluating scientific research and generating commercialization outputs.',
 };
 
 export default function RootLayout({
@@ -12,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body className="font-sans">{children}</body>
+    <html lang="en">
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

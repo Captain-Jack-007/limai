@@ -1,109 +1,170 @@
+'use client';
+
 import Link from 'next/link';
-import { AlertTriangle, ArrowUpRight, FileText } from 'lucide-react';
-import RiskGauge from '@/components/RiskGauge';
-import CategoryBars from '@/components/CategoryBars';
-import IssueRow from '@/components/IssueRow';
-import { SalaryVsSocialChart, TaxBenchmarkChart } from '@/components/Charts';
-import { mockRisk } from '@/lib/mock-data';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import {
+  Paperclip,
+  ArrowUp,
+  Sparkles,
+  FlaskConical,
+  Rocket,
+  Users,
+  FolderOpen,
+  ArrowUpRight,
+  FileText,
+  Lightbulb,
+} from 'lucide-react';
+import { mockProjects } from '@/lib/mock-data';
+import { stageLabel } from '@/lib/types';
+
+const quickActions = [
+  {
+    icon: FlaskConical,
+    title: 'Evaluate my research',
+    desc: 'Score TRL, market and commercial readiness from a paper or summary.',
+    prompt: 'Evaluate my research and score it for commercialization.',
+  },
+  {
+    icon: Rocket,
+    title: 'Generate commercialization plan',
+    desc: 'Get a step-by-step go-to-market roadmap and pitch deck.',
+    prompt:
+      'Generate a commercialization plan and pitch deck for my technology.',
+  },
+  {
+    icon: Users,
+    title: 'Find investors',
+    desc: 'Match against global VC theses and rank by fit score.',
+    prompt: 'Find investors that match my technology and stage.',
+  },
+];
 
 export default function DashboardPage() {
-  const topIssues = [...mockRisk.issues]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+  const router = useRouter();
+  const [prompt, setPrompt] = useState('');
 
-  const counts = {
-    high: mockRisk.issues.filter((i) => i.severity === 'high').length,
-    medium: mockRisk.issues.filter((i) => i.severity === 'medium').length,
-    low: mockRisk.issues.filter((i) => i.severity === 'low').length,
-  };
+  function send(p?: string) {
+    const text = (p ?? prompt).trim();
+    if (!text) return;
+    router.push(`/chat?q=${encodeURIComponent(text)}`);
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">风险概览</h1>
-          <p className="text-sm text-slate-500">
-            {mockRisk.company} · {mockRisk.period} 的 AI 检测结果
-          </p>
+    <div className="max-w-4xl mx-auto space-y-10 px-6 py-10">
+      <header className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 chip bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+          <Sparkles size={12} /> Sci-Bridge Agent · v0 prototype
         </div>
-        <Link href="/report" className="btn-primary">
-          <FileText size={16} />
-          生成报告
-        </Link>
-      </div>
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Describe your <span className="gradient-text">technology</span> or
+          upload your research
+        </h1>
+        <p className="text-slate-500 max-w-xl mx-auto">
+          The agent will evaluate your project, generate a commercialization
+          plan, and match you with investors — all from a single prompt or PDF.
+        </p>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card p-6 flex flex-col items-center justify-center">
-          <div className="text-sm text-slate-500 mb-2">综合风险评分</div>
-          <RiskGauge score={mockRisk.overallScore} />
-          <div className="text-xs text-slate-400 mt-2">
-            由各类别评分加权得出
-          </div>
-        </div>
-
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div className="font-medium">分类评分</div>
-            <div className="flex gap-2 text-xs">
-              <span className="chip bg-red-50 text-red-700">
-                {counts.high} 高风险
-              </span>
-              <span className="chip bg-amber-50 text-amber-700">
-                {counts.medium} 中风险
-              </span>
-              <span className="chip bg-emerald-50 text-emerald-700">
-                {counts.low} 低风险
-              </span>
-            </div>
-          </div>
-          <CategoryBars items={mockRisk.categories} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="font-medium">工资 vs 社保缴费基数</div>
-              <div className="text-xs text-slate-500">
-                月度工资总额与社保缴费基数对比
-              </div>
-            </div>
-          </div>
-          <SalaryVsSocialChart />
-        </div>
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="font-medium">税负 vs 行业均值</div>
-              <div className="text-xs text-slate-500">
-                增值税 / 企业所得税 / 个人所得税 实际税率
-              </div>
-            </div>
-          </div>
-          <TaxBenchmarkChart />
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <span className="font-medium">主要风险问题</span>
-          </div>
-          <Link
-            href="/issues"
-            className="text-sm text-brand-600 hover:underline inline-flex items-center gap-1"
+      <div className="card p-3 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send();
+          }}
+          rows={3}
+          placeholder="e.g. I developed a graphene-based composite electrode that increases battery energy density by 38%..."
+          className="w-full resize-none border-0 focus:ring-0 focus:outline-none text-[15px] px-3 py-2 placeholder:text-slate-400 bg-transparent"
+        />
+        <div className="flex items-center justify-between gap-2 px-2 pb-1">
+          <button
+            type="button"
+            className="btn-ghost text-slate-500"
+            onClick={() => router.push('/chat?upload=1')}
           >
-            查看全部 <ArrowUpRight size={14} />
-          </Link>
+            <Paperclip size={16} /> Upload PDF / PPT / DOC
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 hidden sm:block">
+              ⌘ + Enter to send
+            </span>
+            <button
+              type="button"
+              onClick={() => send()}
+              disabled={!prompt.trim()}
+              className="btn-accent rounded-full !p-2"
+              aria-label="Send"
+            >
+              <ArrowUp size={16} />
+            </button>
+          </div>
         </div>
-        <div>
-          {topIssues.map((i) => (
-            <IssueRow key={i.id} issue={i} />
+      </div>
+
+      <section>
+        <div className="text-xs uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+          <Lightbulb size={12} /> Quick actions
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {quickActions.map(({ icon: Icon, title, desc, prompt: p }) => (
+            <button
+              key={title}
+              onClick={() => send(p)}
+              className="card p-4 text-left hover:border-brand-300 hover:shadow-md transition-all group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-brand-50 text-brand-700 grid place-items-center mb-3 group-hover:bg-brand-100">
+                <Icon size={16} />
+              </div>
+              <div className="font-medium text-sm">{title}</div>
+              <div className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {desc}
+              </div>
+            </button>
           ))}
         </div>
-      </div>
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <FolderOpen size={12} /> Recent projects
+          </div>
+          <Link
+            href="/outputs"
+            className="text-xs text-brand-700 hover:underline inline-flex items-center gap-1"
+          >
+            View saved reports <ArrowUpRight size={12} />
+          </Link>
+        </div>
+        <div className="card divide-y divide-slate-100">
+          {mockProjects.map((p) => (
+            <Link
+              key={p.id}
+              href={`/chat?project=${p.id}`}
+              className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
+            >
+              <div className="w-9 h-9 rounded-lg bg-slate-100 grid place-items-center text-slate-500 shrink-0">
+                <FileText size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="font-medium text-sm truncate">{p.name}</div>
+                  <span className="chip bg-slate-100 text-slate-600">
+                    {stageLabel(p.stage)}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                  {p.summary}
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-400 hidden sm:block">
+                {p.field}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
