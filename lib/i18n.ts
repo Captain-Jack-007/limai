@@ -334,8 +334,8 @@ export const dict = {
     zh: '科技成果转化操作系统',
   },
   ent_org_name: {
-    en: 'Beijing HICOOL Innovation Park',
-    zh: '北京 HICOOL 创新园',
+    en: 'Huairou Science Park',
+    zh: '怀柔科学城',
   },
 
   // ---------- Pipeline stages ----------
