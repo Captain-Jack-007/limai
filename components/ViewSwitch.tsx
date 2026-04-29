@@ -1,23 +1,30 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { FlaskConical, Building2 } from 'lucide-react';
+import { FlaskConical, Building2, Cpu } from 'lucide-react';
 import { useLang } from '@/components/LanguageProvider';
 
 const SCIENTIST_HOME = '/dashboard';
 const ENTERPRISE_HOME = '/enterprise/dashboard';
+const OCP_HOME = '/ocp/overview';
+
+type Mode = 'scientist' | 'enterprise' | 'ocp';
 
 export default function ViewSwitch() {
   const router = useRouter();
   const pathname = usePathname() || '';
   const { t } = useLang();
-  const mode: 'scientist' | 'enterprise' = pathname.startsWith('/enterprise')
+  const mode: Mode = pathname.startsWith('/enterprise')
     ? 'enterprise'
+    : pathname.startsWith('/ocp')
+    ? 'ocp'
     : 'scientist';
 
-  function go(target: 'scientist' | 'enterprise') {
+  function go(target: Mode) {
     if (target === mode) return;
-    router.push(target === 'scientist' ? SCIENTIST_HOME : ENTERPRISE_HOME);
+    if (target === 'scientist') router.push(SCIENTIST_HOME);
+    else if (target === 'enterprise') router.push(ENTERPRISE_HOME);
+    else router.push(OCP_HOME);
   }
 
   return (
@@ -55,6 +62,21 @@ export default function ViewSwitch() {
       >
         <Building2 size={14} />
         {t('view_enterprise')}
+      </button>
+      <button
+        type="button"
+        onClick={() => go('ocp')}
+        aria-pressed={mode === 'ocp'}
+        title={t('view_ocp')}
+        className={
+          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors ' +
+          (mode === 'ocp'
+            ? 'bg-white text-ink-900 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700')
+        }
+      >
+        <Cpu size={14} />
+        {t('view_ocp')}
       </button>
     </div>
   );

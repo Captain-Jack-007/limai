@@ -313,6 +313,7 @@ export const dict = {
   // ---------- View switch ----------
   view_scientist: { en: 'Scientist', zh: '科研端' },
   view_enterprise: { en: 'Enterprise', zh: '机构端' },
+  view_ocp: { en: 'OCP OS', zh: 'OCP OS' },
   view_switchHint: {
     en: 'Switch perspective',
     zh: '切换视角',
@@ -580,6 +581,315 @@ export const dict = {
   cluster_engineering: { en: 'Engineering', zh: '工程与制造' },
   cluster_earth: { en: 'Earth & Environment', zh: '地球与环境' },
   cluster_space: { en: 'Space & Universe', zh: '空间与宇宙' },
+
+  // ---------- OCP OS ----------
+  ocp_brand: { en: 'OCP OS', zh: 'OCP OS' },
+  ocp_brand_tagline: {
+    en: 'AI Operating System for One-Person Companies',
+    zh: '一人公司 AI 操作系统',
+  },
+  ocp_nav_workspace: { en: 'Operating System', zh: '操作系统' },
+  ocp_nav_overview: { en: 'Overview', zh: '总览' },
+  ocp_nav_command: { en: 'Command', zh: '指令中心' },
+  ocp_nav_agents: { en: 'Agents', zh: '智能体' },
+  ocp_nav_missions: { en: 'Missions', zh: '任务' },
+  ocp_nav_content: { en: 'Content', zh: '内容' },
+  ocp_nav_finance: { en: 'Finance', zh: '财务' },
+  ocp_nav_outreach: { en: 'Outreach', zh: '外联' },
+  ocp_nav_settings: { en: 'Settings', zh: '设置' },
+  ocp_nav_companyHeader: { en: 'Company', zh: '公司' },
+  ocp_nav_systemHeader: { en: 'System', zh: '系统' },
+  ocp_company_name: { en: 'Graphene Battery Co.', zh: '石墨烯电池科技' },
+  ocp_company_role: { en: 'Founder · Solo', zh: '创始人 · 独立运营' },
+  ocp_footer: {
+    en: 'OCP OS · prototype',
+    zh: 'OCP OS · 原型版本',
+  },
+
+  // Activity feed (right rail)
+  ocp_feed_title: { en: 'Live Activity', zh: '实时动态' },
+  ocp_feed_subtitle: {
+    en: 'What your AI team is doing right now',
+    zh: 'AI 团队正在执行的任务',
+  },
+  ocp_feed_status_live: { en: 'Live', zh: '实时' },
+  ocp_feed_empty: { en: 'No recent activity', zh: '暂无活动' },
+  ocp_feed_just_now: { en: 'just now', zh: '刚刚' },
+  ocp_feed_min_ago: { en: 'min ago', zh: '分钟前' },
+  ocp_feed_hr_ago: { en: 'h ago', zh: '小时前' },
+
+  // Overview page
+  ocp_ov_chip: { en: 'Company dashboard · live', zh: '公司仪表 · 实时' },
+  ocp_ov_title: { en: 'You are running a company', zh: '你正在运营一家公司' },
+  ocp_ov_sub: {
+    en: 'Your one-person startup orchestrated by five autonomous agents.',
+    zh: '由五个自主智能体协同运营的一人公司。',
+  },
+  ocp_ov_stage: { en: 'Stage', zh: '阶段' },
+  ocp_ov_stage_value: { en: 'Prototype', zh: '原型阶段' },
+  ocp_ov_readiness: { en: 'Readiness Score', zh: '准备度评分' },
+  ocp_ov_funding: { en: 'Funding Status', zh: '融资状态' },
+  ocp_ov_funding_value: {
+    en: 'Not Raised · Pre-seed prep',
+    zh: '未融资 · 种子前准备',
+  },
+  ocp_ov_runway: { en: 'Runway', zh: '运营周期' },
+  ocp_ov_runway_value: { en: '3 months', zh: '3 个月' },
+  ocp_ov_aiActivity: { en: 'AI Activity (24h)', zh: 'AI 活动（24 小时）' },
+  ocp_ov_kpi_campaigns: { en: 'campaigns running', zh: '个进行中活动' },
+  ocp_ov_kpi_leads: { en: 'investor leads identified', zh: '位投资人线索' },
+  ocp_ov_kpi_posts: { en: 'posts generated', zh: '篇生成内容' },
+  ocp_ov_kpi_actions: { en: 'agent actions today', zh: '次今日智能体行动' },
+  ocp_ov_quickActions: { en: 'Quick Actions', zh: '快捷操作' },
+  ocp_ov_qa_raise: { en: 'Raise Funding', zh: '启动融资' },
+  ocp_ov_qa_raise_desc: {
+    en: 'BD + Finance + Social agents activate together',
+    zh: 'BD + 财务 + 社媒 智能体协同启动',
+  },
+  ocp_ov_qa_marketing: { en: 'Launch Marketing', zh: '启动营销' },
+  ocp_ov_qa_marketing_desc: {
+    en: 'Designer + Social run a 7-day campaign',
+    zh: '设计 + 社媒 智能体运行 7 天活动',
+  },
+  ocp_ov_qa_partners: { en: 'Find Partners', zh: '寻找合作' },
+  ocp_ov_qa_partners_desc: {
+    en: 'Strategy + BD draft outreach to top labs',
+    zh: '战略 + BD 智能体起草顶级实验室外联',
+  },
+  ocp_ov_team: { en: 'Your Agent Team', zh: '你的智能体团队' },
+  ocp_ov_team_sub: {
+    en: 'Five autonomous agents on duty.',
+    zh: '五个智能体值守中。',
+  },
+  ocp_ov_recent_missions: { en: 'Active Missions', zh: '进行中任务' },
+  ocp_ov_view_all: { en: 'View all', zh: '查看全部' },
+
+  // Agents page
+  ocp_ag_title: { en: 'Agents', zh: '智能体' },
+  ocp_ag_sub: {
+    en: 'Monitor and configure each member of your AI team.',
+    zh: '监控并配置 AI 团队中的每个成员。',
+  },
+  ocp_ag_status_active: { en: 'Active', zh: '运行中' },
+  ocp_ag_status_idle: { en: 'Idle', zh: '空闲' },
+  ocp_ag_status_thinking: { en: 'Thinking', zh: '思考中' },
+  ocp_ag_lastAction: { en: 'Last action', zh: '上次行动' },
+  ocp_ag_impact: { en: 'Impact', zh: '影响' },
+  ocp_ag_open: { en: 'Open', zh: '打开' },
+  ocp_ag_configure: { en: 'Configure', zh: '配置' },
+  ocp_ag_role_strategy: { en: 'CEO · decision maker', zh: 'CEO · 决策中枢' },
+  ocp_ag_role_social: { en: 'Voice of the company', zh: '品牌发声' },
+  ocp_ag_role_designer: { en: 'Visual identity', zh: '视觉设计' },
+  ocp_ag_role_bd: { en: 'Pitch & deals', zh: '路演与交易' },
+  ocp_ag_role_finance: { en: 'Cash & runway', zh: '资金与周期' },
+  ocp_ag_name_strategy: { en: 'Strategy Agent', zh: '战略智能体' },
+  ocp_ag_name_social: { en: 'Social Media Agent', zh: '社媒智能体' },
+  ocp_ag_name_designer: { en: 'Designer Agent', zh: '设计智能体' },
+  ocp_ag_name_bd: { en: 'Business Development Agent', zh: '商务拓展智能体' },
+  ocp_ag_name_finance: { en: 'Finance Agent', zh: '财务智能体' },
+
+  // Agent detail
+  ocp_ag_back: { en: 'Back to agents', zh: '返回智能体列表' },
+  ocp_ag_runNow: { en: 'Run a task', zh: '立即执行' },
+  ocp_ag_capabilities: { en: 'Capabilities', zh: '能力' },
+  ocp_ag_recent: { en: 'Recent Activity', zh: '近期活动' },
+  ocp_ag_recent_empty: { en: 'No activity yet today.', zh: '今日暂无活动。' },
+  ocp_ag_missions_involved: { en: 'Missions involved', zh: '相关任务' },
+  ocp_ag_no_missions: {
+    en: 'Not assigned to any active mission.',
+    zh: '尚未参与任何任务。',
+  },
+  ocp_ag_minutesAgo: { en: '{n} min ago', zh: '{n} 分钟前' },
+  ocp_ag_hoursAgo: { en: '{n} h ago', zh: '{n} 小时前' },
+  ocp_ag_stat_actions: { en: 'Actions today', zh: '今日行动' },
+  ocp_ag_stat_missions: { en: 'Active missions', zh: '进行中任务' },
+  ocp_ag_stat_status: { en: 'Status', zh: '状态' },
+
+  // Agent configure
+  ocp_ag_cfg_title: { en: 'Configure', zh: '配置' },
+  ocp_ag_cfg_save: { en: 'Save changes', zh: '保存更改' },
+  ocp_ag_cfg_cancel: { en: 'Cancel', zh: '取消' },
+  ocp_ag_cfg_general: { en: 'General', zh: '通用' },
+  ocp_ag_cfg_displayName: { en: 'Display name', zh: '显示名称' },
+  ocp_ag_cfg_role: { en: 'Role', zh: '角色' },
+  ocp_ag_cfg_autonomy: { en: 'Autonomy', zh: '自主程度' },
+  ocp_ag_cfg_autonomy_sub: {
+    en: 'Choose how much the agent can do without your approval.',
+    zh: '设置智能体可在无审批下执行的范围。',
+  },
+  ocp_ag_cfg_aut_manual: { en: 'Manual', zh: '手动' },
+  ocp_ag_cfg_aut_review: { en: 'Review', zh: '审核' },
+  ocp_ag_cfg_aut_auto: { en: 'Autonomous', zh: '自主' },
+  ocp_ag_cfg_aut_manual_d: {
+    en: 'Agent only suggests, you click to run.',
+    zh: '智能体仅给出建议，由你执行。',
+  },
+  ocp_ag_cfg_aut_review_d: {
+    en: 'Agent prepares actions, you approve before they ship.',
+    zh: '智能体准备行动，需你审批后才执行。',
+  },
+  ocp_ag_cfg_aut_auto_d: {
+    en: 'Agent acts on its own. You see results in the activity feed.',
+    zh: '智能体自主执行，结果显示在活动流中。',
+  },
+  ocp_ag_cfg_voice: { en: 'Voice & tone', zh: '语气与风格' },
+  ocp_ag_cfg_voice_sub: {
+    en: 'How the agent should sound when it produces content.',
+    zh: '智能体生成内容时的语气定位。',
+  },
+  ocp_ag_cfg_tone_visionary: { en: 'Visionary', zh: '富有远见' },
+  ocp_ag_cfg_tone_technical: { en: 'Technical', zh: '专业严谨' },
+  ocp_ag_cfg_tone_friendly: { en: 'Friendly', zh: '亲切友好' },
+  ocp_ag_cfg_tone_bold: { en: 'Bold', zh: '果断有力' },
+  ocp_ag_cfg_channels: { en: 'Channels', zh: '渠道' },
+  ocp_ag_cfg_channels_sub: {
+    en: 'Where this agent is allowed to publish or reach out.',
+    zh: '允许该智能体发布或外联的渠道。',
+  },
+  ocp_ag_cfg_triggers: { en: 'Triggers', zh: '触发条件' },
+  ocp_ag_cfg_triggers_sub: {
+    en: 'When the agent should wake up automatically.',
+    zh: '智能体自动唤醒的条件。',
+  },
+  ocp_ag_cfg_trg_schedule: { en: 'On schedule', zh: '按计划' },
+  ocp_ag_cfg_trg_event: { en: 'On new event', zh: '事件触发' },
+  ocp_ag_cfg_trg_command: { en: 'On command only', zh: '仅指令触发' },
+  ocp_ag_cfg_saved: { en: 'Saved', zh: '已保存' },
+
+  // Missions page
+  ocp_mi_title: { en: 'Missions', zh: '任务' },
+  ocp_mi_sub: {
+    en: 'High-level intents the system breaks down into agent tasks.',
+    zh: '系统将高层意图拆解为智能体任务。',
+  },
+  ocp_mi_new: { en: 'New Mission', zh: '新建任务' },
+  ocp_mi_progress: { en: 'Progress', zh: '进度' },
+  ocp_mi_owner: { en: 'Lead', zh: '负责' },
+  ocp_mi_status_active: { en: 'Active', zh: '进行中' },
+  ocp_mi_status_done: { en: 'Done', zh: '已完成' },
+  ocp_mi_status_queued: { en: 'Queued', zh: '排队中' },
+  ocp_mi_tasks: { en: 'Tasks', zh: '子任务' },
+
+  // Command interface
+  ocp_cmd_title: { en: 'Command', zh: '指令中心' },
+  ocp_cmd_sub: {
+    en: 'Tell the system what you want. The agents will coordinate.',
+    zh: '告诉系统你的目标，智能体将自动协同。',
+  },
+  ocp_cmd_placeholder: {
+    en: 'e.g., I want to raise $1M seed funding…',
+    zh: '例如：我想融资 100 万美元种子轮…',
+  },
+  ocp_cmd_send: { en: 'Run', zh: '执行' },
+  ocp_cmd_examples: { en: 'Try', zh: '试试' },
+  ocp_cmd_ex1: { en: 'Raise seed funding', zh: '启动种子轮融资' },
+  ocp_cmd_ex2: {
+    en: 'Launch product awareness campaign',
+    zh: '启动产品认知活动',
+  },
+  ocp_cmd_ex3: { en: 'Find 3 strategic partners', zh: '寻找 3 个战略合作伙伴' },
+  ocp_cmd_ex4: { en: 'Cut my burn rate by 30%', zh: '将燃烧率降低 30%' },
+  ocp_cmd_thinking: {
+    en: 'Strategy Agent is breaking down your goal…',
+    zh: '战略智能体正在拆解你的目标…',
+  },
+  ocp_cmd_dispatched: {
+    en: 'Dispatched to {n} agents',
+    zh: '已分派给 {n} 个智能体',
+  },
+  ocp_cmd_youLabel: { en: 'You', zh: '你' },
+  ocp_cmd_systemLabel: { en: 'OCP OS', zh: 'OCP OS' },
+
+  // Content & Campaigns
+  ocp_co_title: { en: 'Content & Campaigns', zh: '内容与活动' },
+  ocp_co_sub: {
+    en: 'All external communication generated and scheduled by your agents.',
+    zh: '由智能体生成并排期的所有对外传播内容。',
+  },
+  ocp_co_newCampaign: { en: 'New Campaign', zh: '新建活动' },
+  ocp_co_status_running: { en: 'Running', zh: '进行中' },
+  ocp_co_status_scheduled: { en: 'Scheduled', zh: '已排期' },
+  ocp_co_status_draft: { en: 'Draft', zh: '草稿' },
+  ocp_co_status_published: { en: 'Published', zh: '已发布' },
+  ocp_co_engagement: { en: 'Engagement', zh: '互动数据' },
+  ocp_co_reach: { en: 'Reach', zh: '触达' },
+  ocp_co_clicks: { en: 'Clicks', zh: '点击' },
+  ocp_co_leads: { en: 'Leads', zh: '线索' },
+  ocp_co_posts: { en: 'Posts', zh: '帖子' },
+
+  // Finance
+  ocp_fi_title: { en: 'Finance', zh: '财务' },
+  ocp_fi_sub: {
+    en: 'Cash, runway, and burn rate at a glance.',
+    zh: '一眼掌握现金、运营周期与燃烧率。',
+  },
+  ocp_fi_balance: { en: 'Cash on hand', zh: '账面现金' },
+  ocp_fi_burn: { en: 'Monthly burn', zh: '月度支出' },
+  ocp_fi_runway: { en: 'Runway', zh: '运营周期' },
+  ocp_fi_runway_months: { en: 'months', zh: '个月' },
+  ocp_fi_expenses: { en: 'Expenses (last 30 days)', zh: '近 30 天支出' },
+  ocp_fi_recommendation: { en: 'Agent Recommendation', zh: '智能体建议' },
+  ocp_fi_rec_text: {
+    en: 'Reduce marketing spend by 20% or open a $500K bridge round within 6 weeks to extend runway past 6 months.',
+    zh: '将营销支出降低 20%，或在 6 周内启动 50 万美元过桥融资，将运营周期延长至 6 个月以上。',
+  },
+
+  // Outreach
+  ocp_ou_title: { en: 'Outreach', zh: '外联' },
+  ocp_ou_sub: {
+    en: 'Investors, partners and customer conversations the BD agent is running.',
+    zh: 'BD 智能体正在推进的投资人、合作伙伴与客户沟通。',
+  },
+  ocp_ou_addLead: { en: 'Add Lead', zh: '添加线索' },
+  ocp_ou_status_new: { en: 'New', zh: '新建' },
+  ocp_ou_status_contacted: { en: 'Contacted', zh: '已联系' },
+  ocp_ou_status_meeting: { en: 'Meeting Set', zh: '已约会议' },
+  ocp_ou_status_negotiating: { en: 'Negotiating', zh: '洽谈中' },
+  ocp_ou_status_passed: { en: 'Passed', zh: '已婉拒' },
+  ocp_ou_nextStep: { en: 'Next step', zh: '下一步' },
+  ocp_ou_kind_investor: { en: 'Investor', zh: '投资人' },
+  ocp_ou_kind_partner: { en: 'Partner', zh: '合作方' },
+  ocp_ou_kind_customer: { en: 'Customer', zh: '客户' },
+
+  // Settings
+  ocp_se_title: { en: 'Settings', zh: '设置' },
+  ocp_se_sub: {
+    en: 'Configure your operating system.',
+    zh: '配置你的操作系统。',
+  },
+  ocp_se_company: { en: 'Company', zh: '公司信息' },
+  ocp_se_company_name: { en: 'Company name', zh: '公司名称' },
+  ocp_se_company_stage: { en: 'Stage', zh: '阶段' },
+  ocp_se_company_industry: { en: 'Industry', zh: '行业' },
+  ocp_se_company_industry_value: {
+    en: 'Energy · Batteries',
+    zh: '能源 · 电池',
+  },
+  ocp_se_agents: { en: 'Agent Permissions', zh: '智能体权限' },
+  ocp_se_agents_sub: {
+    en: 'Decide which agents can act autonomously vs. require your approval.',
+    zh: '设定哪些智能体可自主行动，哪些需要你批准。',
+  },
+  ocp_se_perm_auto: { en: 'Auto', zh: '自动' },
+  ocp_se_perm_review: { en: 'Review', zh: '审核' },
+  ocp_se_integrations: { en: 'Integrations', zh: '集成' },
+  ocp_se_integrations_sub: {
+    en: 'External channels and tools the OS can publish or read from.',
+    zh: '操作系统可读写的外部渠道与工具。',
+  },
+  ocp_se_int_connected: { en: 'Connected', zh: '已连接' },
+  ocp_se_int_connect: { en: 'Connect', zh: '连接' },
+  ocp_se_danger: { en: 'Danger Zone', zh: '危险操作' },
+  ocp_se_danger_pause: { en: 'Pause all agents', zh: '暂停全部智能体' },
+  ocp_se_danger_pause_desc: {
+    en: 'Halt every active mission until you resume.',
+    zh: '在恢复前停止所有进行中任务。',
+  },
+  ocp_se_danger_reset: { en: 'Reset OS', zh: '重置操作系统' },
+  ocp_se_danger_reset_desc: {
+    en: 'Wipe all missions and rebuild from scratch.',
+    zh: '清空全部任务并从零重建。',
+  },
 } as const;
 
 export type DictKey = keyof typeof dict;
