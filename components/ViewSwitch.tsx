@@ -14,6 +14,7 @@ export default function ViewSwitch() {
   const router = useRouter();
   const pathname = usePathname() || '';
   const { t } = useLang();
+
   const mode: Mode = pathname.startsWith('/enterprise')
     ? 'enterprise'
     : pathname.startsWith('/ocp')
@@ -27,57 +28,45 @@ export default function ViewSwitch() {
     else router.push(OCP_HOME);
   }
 
+  const tabs: { key: Mode; icon: React.ElementType; labelKey: Parameters<typeof t>[0] }[] = [
+    { key: 'scientist', icon: FlaskConical, labelKey: 'view_scientist' },
+    { key: 'enterprise', icon: Building2, labelKey: 'view_enterprise' },
+    { key: 'ocp', icon: Cpu, labelKey: 'view_ocp' },
+  ];
+
   return (
     <div
       role="group"
       aria-label={t('view_switchHint')}
-      className="flex items-center bg-slate-100 rounded-lg p-0.5 text-xs font-medium"
+      className="flex items-center rounded-lg p-0.5 text-xs font-medium"
+      style={{ background: 'rgba(255,255,255,0.06)' }}
     >
-      <button
-        type="button"
-        onClick={() => go('scientist')}
-        aria-pressed={mode === 'scientist'}
-        title={t('view_scientist')}
-        className={
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors ' +
-          (mode === 'scientist'
-            ? 'bg-white text-ink-900 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700')
-        }
-      >
-        <FlaskConical size={14} />
-        {t('view_scientist')}
-      </button>
-      <button
-        type="button"
-        onClick={() => go('enterprise')}
-        aria-pressed={mode === 'enterprise'}
-        title={t('view_enterprise')}
-        className={
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors ' +
-          (mode === 'enterprise'
-            ? 'bg-white text-ink-900 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700')
-        }
-      >
-        <Building2 size={14} />
-        {t('view_enterprise')}
-      </button>
-      <button
-        type="button"
-        onClick={() => go('ocp')}
-        aria-pressed={mode === 'ocp'}
-        title={t('view_ocp')}
-        className={
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors ' +
-          (mode === 'ocp'
-            ? 'bg-white text-ink-900 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700')
-        }
-      >
-        <Cpu size={14} />
-        {t('view_ocp')}
-      </button>
+      {tabs.map(({ key, icon: Icon, labelKey }) => {
+        const active = mode === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => go(key)}
+            aria-pressed={active}
+            title={t(labelKey)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors"
+            style={{
+              background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
+              color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+            }}
+            onMouseEnter={(e) => {
+              if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+            }}
+            onMouseLeave={(e) => {
+              if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+            }}
+          >
+            <Icon size={14} />
+            {t(labelKey)}
+          </button>
+        );
+      })}
     </div>
   );
 }

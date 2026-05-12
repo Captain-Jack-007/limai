@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bot, Gauge, Shield, Save, Sparkles } from 'lucide-react';
+import { Bot, Gauge, Shield, Save } from 'lucide-react';
 import { useLang } from '@/components/LanguageProvider';
 import type { DictKey } from '@/lib/i18n';
 
@@ -16,40 +16,20 @@ type Option<T extends string> = {
 };
 
 const models: Option<Model>[] = [
-  {
-    value: 'deepseek',
-    labelKey: 'set_model_deepseek',
-    descKey: 'set_model_deepseek_desc',
-  },
+  { value: 'deepseek', labelKey: 'set_model_deepseek', descKey: 'set_model_deepseek_desc' },
   { value: 'qwen', labelKey: 'set_model_qwen', descKey: 'set_model_qwen_desc' },
-  {
-    value: 'openai',
-    labelKey: 'set_model_openai',
-    descKey: 'set_model_openai_desc',
-  },
+  { value: 'openai', labelKey: 'set_model_openai', descKey: 'set_model_openai_desc' },
 ];
 
 const modes: Option<Mode>[] = [
   { value: 'fast', labelKey: 'set_mode_fast', descKey: 'set_mode_fast_desc' },
-  {
-    value: 'standard',
-    labelKey: 'set_mode_standard',
-    descKey: 'set_mode_standard_desc',
-  },
+  { value: 'standard', labelKey: 'set_mode_standard', descKey: 'set_mode_standard_desc' },
   { value: 'deep', labelKey: 'set_mode_deep', descKey: 'set_mode_deep_desc' },
 ];
 
 const privacy: Option<Privacy>[] = [
-  {
-    value: 'local',
-    labelKey: 'set_priv_local',
-    descKey: 'set_priv_local_desc',
-  },
-  {
-    value: 'cloud',
-    labelKey: 'set_priv_cloud',
-    descKey: 'set_priv_cloud_desc',
-  },
+  { value: 'local', labelKey: 'set_priv_local', descKey: 'set_priv_local_desc' },
+  { value: 'cloud', labelKey: 'set_priv_cloud', descKey: 'set_priv_cloud_desc' },
 ];
 
 export default function SettingsPage() {
@@ -66,14 +46,11 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-      <header>
-        <div className="inline-flex items-center gap-1.5 chip bg-brand-50 text-brand-700 ring-1 ring-brand-100 mb-2">
-          <Sparkles size={12} /> {t('set_chip')}
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t('set_title')}
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">{t('set_subhead')}</p>
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold text-white">{t('set_title')}</h1>
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          {t('set_subhead')}
+        </p>
       </header>
 
       <Group icon={Bot} title={t('set_aiModel')} hint={t('set_aiModelHint')}>
@@ -90,11 +67,13 @@ export default function SettingsPage() {
 
       <div className="flex items-center justify-end gap-3">
         {saved && (
-          <span className="text-xs text-emerald-600 animate-fade-in">
-            {t('set_saved')}
-          </span>
+          <span className="text-xs text-emerald-400 animate-fade-in">{t('set_saved')}</span>
         )}
-        <button onClick={save} className="btn-primary">
+        <button
+          onClick={save}
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium transition-opacity hover:opacity-90"
+          style={{ background: '#fff', color: '#0a0a0c' }}
+        >
           <Save size={14} /> {t('set_save')}
         </button>
       </div>
@@ -108,20 +87,30 @@ function Group({
   hint,
   children,
 }: {
-  icon: any;
+  icon: React.ElementType;
   title: string;
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="card p-5 space-y-4">
+    <section
+      className="rounded-xl p-5 space-y-4 glow-border"
+      style={{ background: 'rgba(255,255,255,0.03)' }}
+    >
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-slate-100 grid place-items-center text-slate-600 shrink-0">
+        <div
+          className="w-8 h-8 rounded-lg grid place-items-center shrink-0"
+          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}
+        >
           <Icon size={16} />
         </div>
         <div>
-          <div className="font-medium text-sm">{title}</div>
-          {hint && <div className="text-xs text-slate-500 mt-0.5">{hint}</div>}
+          <div className="font-medium text-sm text-white">{title}</div>
+          {hint && (
+            <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              {hint}
+            </div>
+          )}
         </div>
       </div>
       {children}
@@ -147,25 +136,28 @@ function RadioGrid<T extends string>({
           <button
             key={o.value}
             onClick={() => onChange(o.value)}
-            className={
-              'text-left p-3 rounded-xl border transition-all ' +
-              (active
-                ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20'
-                : 'border-slate-200 hover:border-slate-300 bg-white')
-            }
+            className="text-left p-3 rounded-xl transition-all"
+            style={{
+              background: active ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+              border: active
+                ? '1px solid rgba(255,255,255,0.3)'
+                : '1px solid rgba(255,255,255,0.12)',
+            }}
           >
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">{t(o.labelKey)}</div>
+              <div className="text-sm font-medium text-white">{t(o.labelKey)}</div>
               <span
-                className={
-                  'w-3.5 h-3.5 rounded-full border-2 ' +
-                  (active
-                    ? 'border-brand-500 bg-brand-500 shadow-[inset_0_0_0_2px_white]'
-                    : 'border-slate-300')
-                }
+                className="w-3.5 h-3.5 rounded-full border-2 shrink-0"
+                style={{
+                  borderColor: active ? '#fff' : 'rgba(255,255,255,0.3)',
+                  background: active ? '#fff' : 'transparent',
+                  boxShadow: active ? 'inset 0 0 0 2px #0a0a0c' : 'none',
+                }}
               />
             </div>
-            <div className="text-xs text-slate-500 mt-1">{t(o.descKey)}</div>
+            <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              {t(o.descKey)}
+            </div>
           </button>
         );
       })}

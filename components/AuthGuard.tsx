@@ -14,7 +14,7 @@ export default function AuthGuard({
 
   useEffect(() => {
     if (!isAuthed()) {
-      router.replace('/');
+      router.replace('/login');
       return;
     }
     setReady(true);

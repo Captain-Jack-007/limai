@@ -81,3 +81,73 @@ body {
     background: white;
   }
 }
+
+/* ---- 渐变光照边框 ---- */
+.glow-border {
+  position: relative;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.12) 30%,
+    rgba(255, 255, 255, 0.04) 70%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.2s ease;
+  will-change: background;
+}
+
+/* hover 增强版 */
+.glow-border-hover:hover::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+}
+
+/* focus 增强版 */
+.glow-border-focus:focus-within::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+}
+
+/* ---- FloatingAgent animations ---- */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.25; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2.5s ease-out infinite;
+}
+
+@keyframes chat-pop-in {
+  0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-chat-pop-in {
+  animation: chat-pop-in 0.25s ease-out forwards;
+}

@@ -1,178 +1,199 @@
 'use client';
 
-import Link from 'next/link';
+import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import {
-  Paperclip,
-  ArrowUp,
-  Sparkles,
-  FlaskConical,
-  Rocket,
-  Users,
-  FolderOpen,
-  ArrowUpRight,
-  FileText,
-  Lightbulb,
-} from 'lucide-react';
-import { mockProjects } from '@/lib/mock-data';
-import { stageDictKey } from '@/lib/types';
-import { useLang } from '@/components/LanguageProvider';
-import type { DictKey } from '@/lib/i18n';
+import dynamic from 'next/dynamic';
+import { ArrowUp, Paperclip } from 'lucide-react';
+import { getRecentProjects } from '@/lib/recent-projects';
+import type { RecentProject } from '@/lib/recent-projects';
 
-type QuickAction = {
-  icon: any;
-  titleKey: DictKey;
-  descKey: DictKey;
-  promptKey: DictKey;
-};
+const ParticleSphere = dynamic(() => import('@/components/ParticleSphere'), { ssr: false });
 
-const quickActions: QuickAction[] = [
-  {
-    icon: FlaskConical,
-    titleKey: 'dash_qa1_title',
-    descKey: 'dash_qa1_desc',
-    promptKey: 'dash_qa1_prompt',
-  },
-  {
-    icon: Rocket,
-    titleKey: 'dash_qa2_title',
-    descKey: 'dash_qa2_desc',
-    promptKey: 'dash_qa2_prompt',
-  },
-  {
-    icon: Users,
-    titleKey: 'dash_qa3_title',
-    descKey: 'dash_qa3_desc',
-    promptKey: 'dash_qa3_prompt',
-  },
+const QUICK_ACTIONS = [
+  { label: '智能评估', prompt: '' as string | null, href: null as string | null },
+  { label: '生成研报', prompt: '请生成完整技术评估研报', href: null },
+  { label: '商业化方案', prompt: null, href: '/outputs' },
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { t, b } = useLang();
-  const [prompt, setPrompt] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState('');
+  const [projects, setProjects] = useState<RecentProject[]>([]);
 
-  function send(p?: string) {
-    const text = (p ?? prompt).trim();
-    if (!text) return;
-    router.push(`/chat?q=${encodeURIComponent(text)}`);
+  useEffect(() => {
+    setProjects(getRecentProjects(6));
+  }, []);
+
+  function autoResize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function focusInput(prefill: string) {
+    setText(prefill);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      autoResize(el);
+    });
+  }
+
+  function send() {
+    const q = text.trim();
+    if (!q) return;
+    router.push(`/chat?q=${encodeURIComponent(q)}`);
+  }
+
+  function formatDate(ts: number) {
+    return new Date(ts).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 px-6 py-10">
-      <header className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 chip bg-brand-50 text-brand-700 ring-1 ring-brand-100">
-          <Sparkles size={12} /> {t('dash_chip')}
-        </div>
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          {t('dash_h1_a')}{' '}
-          <span className="gradient-text">{t('dash_h1_tech')}</span>
-          {t('dash_h1_b')}
-        </h1>
-        <p className="text-slate-500 max-w-xl mx-auto">{t('dash_sub')}</p>
-      </header>
+    <div className="flex flex-col" style={{ background: '#0a0a0c', minHeight: '100vh' }}>
 
-      <div className="card p-3 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send();
-          }}
-          rows={3}
-          placeholder={t('dash_placeholder')}
-          className="w-full resize-none border-0 focus:ring-0 focus:outline-none text-[15px] px-3 py-2 placeholder:text-slate-400 bg-transparent"
-        />
-        <div className="flex items-center justify-between gap-2 px-2 pb-1">
-          <button
-            type="button"
-            className="btn-ghost text-slate-500"
-            onClick={() => router.push('/chat?upload=1')}
+      {/* Hero */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 py-16">
+
+        <ParticleSphere />
+
+        <div className="text-center space-y-2">
+          <h1
+            className="font-semibold"
+            style={{ fontSize: 36, color: '#fff', lineHeight: 1.25 }}
           >
-            <Paperclip size={16} /> {t('dash_uploadBtn')}
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-400 hidden sm:block">
-              {t('dash_kbdHint')}
-            </span>
+            准备好了吗？从科研到市场。
+          </h1>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>
+            赛乔 AI 技术经理人 · 生成专业商业调研和方案
+          </p>
+        </div>
+
+        {/* Quick actions */}
+        <div className="flex items-center flex-wrap justify-center gap-3">
+          {QUICK_ACTIONS.map(({ label, prompt, href }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                if (href) { router.push(href); return; }
+                focusInput(prompt ?? '');
+              }}
+              className="relative rounded-full px-5 py-2.5 text-sm transition-all glow-border glow-border-hover"
+              style={{ background: '#111113', color: 'rgba(255,255,255,0.9)' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div
+          className="relative w-full max-w-[720px] rounded-2xl glow-border glow-border-focus"
+          style={{ background: '#111113' }}
+        >
+          <textarea
+            ref={textareaRef}
+            value={text}
+            rows={1}
+            placeholder="输入项目名称、科学家姓名、或上传 BP 文件..."
+            onChange={(e) => {
+              setText(e.target.value);
+              autoResize(e.target);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            className="w-full resize-none bg-transparent outline-none px-4 pt-4 pb-2 placeholder:text-white/45"
+            style={{ color: '#fff', fontSize: 15, caretColor: '#fff', minHeight: 28 }}
+          />
+          <div className="flex items-center justify-between px-4 pb-3 pt-1">
             <button
               type="button"
-              onClick={() => send()}
-              disabled={!prompt.trim()}
-              className="btn-accent rounded-full !p-2"
-              aria-label={t('send')}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
+              style={{ color: 'rgba(255,255,255,0.55)' }}
             >
-              <ArrowUp size={16} />
+              <Paperclip size={15} />
+              Attach
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt,.md,.doc,.docx,.ppt,.pptx"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setText((prev) => prev ? `${prev} ${f.name}` : f.name);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              onClick={send}
+              disabled={!text.trim()}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity disabled:opacity-30"
+              style={{ background: '#fff' }}
+            >
+              <ArrowUp size={16} color="#0a0a0c" />
             </button>
           </div>
         </div>
       </div>
 
-      <section>
-        <div className="text-xs uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-          <Lightbulb size={12} /> {t('dash_quickActions')}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {quickActions.map(({ icon: Icon, titleKey, descKey, promptKey }) => (
-            <button
-              key={titleKey}
-              onClick={() => send(t(promptKey))}
-              className="card p-4 text-left hover:border-brand-300 hover:shadow-md transition-all group"
-            >
-              <div className="w-9 h-9 rounded-lg bg-brand-50 text-brand-700 grid place-items-center mb-3 group-hover:bg-brand-100">
-                <Icon size={16} />
-              </div>
-              <div className="font-medium text-sm">{t(titleKey)}</div>
-              <div className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {t(descKey)}
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* Recent projects */}
+      <section className="px-6 pb-16 w-full max-w-5xl mx-auto">
+        <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          最近的评估项目
+        </p>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-xs uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <FolderOpen size={12} /> {t('dash_recent')}
-          </div>
-          <Link
-            href="/outputs"
-            className="text-xs text-brand-700 hover:underline inline-flex items-center gap-1"
-          >
-            {t('dash_viewSaved')} <ArrowUpRight size={12} />
-          </Link>
-        </div>
-        <div className="card divide-y divide-slate-100">
-          {mockProjects.map((p) => (
-            <Link
-              key={p.id}
-              href={`/chat?project=${p.id}`}
-              className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-lg bg-slate-100 grid place-items-center text-slate-500 shrink-0">
-                <FileText size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="font-medium text-sm truncate">
-                    {b(p.name)}
-                  </div>
-                  <span className="chip bg-slate-100 text-slate-600">
-                    {t(stageDictKey[p.stage])}
+        {projects.length === 0 ? (
+          <p className="text-sm text-center py-10" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            还没有评估项目，从上方开始你的第一次评估
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => router.push(`/reports/${p.id}`)}
+                className="relative text-left rounded-xl p-4 transition-all glow-border glow-border-hover"
+                style={{ background: '#111113' }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="font-medium text-sm" style={{ color: '#fff' }}>
+                    {p.projectName}
                   </span>
+                  {p.trlScore > 0 && (
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                    >
+                      TRL {p.trlScore}
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                  {b(p.summary)}
-                </div>
-              </div>
-              <div className="text-[11px] text-slate-400 hidden sm:block">
-                {b(p.field)}
-              </div>
-            </Link>
-          ))}
-        </div>
+                {p.industry && (
+                  <span
+                    className="text-xs rounded-full px-2 py-0.5 mb-2 inline-block"
+                    style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
+                  >
+                    {p.industry}
+                  </span>
+                )}
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {formatDate(p.createdAt)}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
