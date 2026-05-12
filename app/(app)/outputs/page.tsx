@@ -159,8 +159,10 @@ function ReportView() {
     );
   }
 
+  const canSubmit = reportDesc.trim().length > 0 || uploadedFiles.length > 0;
+
   async function handleGenerate() {
-    if (!reportDesc.trim() || selectedSections.length === 0 || isGenerating) return;
+    if (!canSubmit || selectedSections.length === 0 || isGenerating) return;
     setIsGenerating(true);
     setGenerateError('');
     setReport({});
@@ -182,7 +184,7 @@ function ReportView() {
         industry: '',
         trl: 0,
         score: 0,
-        summary: reportDesc.trim(),
+        summary: reportDesc.trim() || (zh ? '（请根据上传的文件内容进行分析）' : '(Please analyze based on the uploaded files)'),
       }));
       form.append('sections', JSON.stringify(selectedSections));
       uploadedFiles.forEach((f) => form.append('files', f));
@@ -203,7 +205,7 @@ function ReportView() {
   }
 
   async function handleGenerateFull() {
-    if (!reportDesc.trim() || isGeneratingFull) return;
+    if (!canSubmit || isGeneratingFull) return;
     setIsGeneratingFull(true);
     setFullError('');
     setFullContent('');
@@ -216,7 +218,7 @@ function ReportView() {
       const form = new FormData();
       form.append('projectInfo', JSON.stringify({
         name: reportName.trim() || (zh ? '未命名项目' : 'Untitled Project'),
-        summary: reportDesc.trim(),
+        summary: reportDesc.trim() || (zh ? '（请根据上传的文件内容进行分析）' : '(Please analyze based on the uploaded files)'),
       }));
       uploadedFiles.forEach((f) => form.append('files', f));
 
@@ -440,7 +442,7 @@ function ReportView() {
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={handleGenerate}
-            disabled={!reportDesc.trim() || selectedSections.length === 0 || isGenerating || isGeneratingFull}
+            disabled={!canSubmit || selectedSections.length === 0 || isGenerating || isGeneratingFull}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-opacity disabled:opacity-40"
             style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
           >
@@ -450,7 +452,7 @@ function ReportView() {
 
           <button
             onClick={handleGenerateFull}
-            disabled={!reportDesc.trim() || isGenerating || isGeneratingFull}
+            disabled={!canSubmit || isGenerating || isGeneratingFull}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-opacity disabled:opacity-40"
             style={{ background: '#fff', color: '#0a0a0c' }}
           >

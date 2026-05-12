@@ -133,13 +133,43 @@ function ChatWorkspace() {
     };
 
     let apiText: string;
+
     if (file.type.startsWith('text/') || /\.(txt|md|csv)$/i.test(file.name)) {
+      // 纯文本直接在浏览器读取
       const content = await file.text();
       apiText =
         lang === 'zh'
           ? `用户上传了文件「${file.name}」，内容如下：\n\n${content.slice(0, 6000)}\n\n请分析文件中的技术内容和商业化潜力。`
           : `User uploaded "${file.name}". Content:\n\n${content.slice(0, 6000)}\n\nPlease analyze the technology and commercialization potential.`;
+    } else if (/\.(pdf|docx?|doc)$/i.test(file.name)) {
+      // PDF / Word 需要服务端解析
+      setThinking(true);
+      let extractedText = '';
+      let extractWarn = '';
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch('/api/ai/extract-text', { method: 'POST', body: form });
+        const data = await res.json();
+        extractedText = data.text ?? '';
+        extractWarn = data.warn ?? '';
+      } catch { /* fall through to acknowledgement */ }
+
+      if (extractedText.trim()) {
+        apiText =
+          lang === 'zh'
+            ? `用户上传了文件「${file.name}」，内容如下：\n\n${extractedText.slice(0, 6000)}\n\n请分析文件中的技术内容和商业化潜力。`
+            : `User uploaded "${file.name}". Content:\n\n${extractedText.slice(0, 6000)}\n\nPlease analyze the technology and commercialization potential.`;
+      } else {
+        const warnNote = extractWarn ? `（${extractWarn}）` : '';
+        apiText =
+          lang === 'zh'
+            ? `用户上传了文件「${file.name}」（${(file.size / 1024).toFixed(0)} KB）${warnNote}。请告知用户已收到文件，并说明需要哪些具体信息才能进行商业化评估分析。`
+            : `User uploaded "${file.name}" (${(file.size / 1024).toFixed(0)} KB). Acknowledge receipt and describe what you need for commercialization analysis.`;
+      }
+      // thinking 由 callAI 接管，不在此处 setThinking(false)
     } else {
+      // 图片、PPT 等暂不支持解析
       apiText =
         lang === 'zh'
           ? `用户上传了文件「${file.name}」（${(file.size / 1024).toFixed(0)} KB）。请告知用户已收到文件，并说明需要哪些具体信息才能进行商业化评估分析。`
