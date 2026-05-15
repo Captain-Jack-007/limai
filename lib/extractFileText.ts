@@ -1,7 +1,7 @@
 // Server-only: extract plain text from uploaded files
 // pdf-parse / mammoth loaded at runtime via require() to avoid SSR issues
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB per file
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB per file
 
 export interface ExtractResult {
   fileName: string;
@@ -14,7 +14,7 @@ export async function extractFileText(file: File): Promise<ExtractResult> {
   const lower = name.toLowerCase();
 
   if (file.size > MAX_FILE_BYTES) {
-    return { fileName: name, text: '', warn: `文件 "${name}" 超过 10MB 限制，已跳过` };
+    return { fileName: name, text: '', warn: `文件 "${name}" 超过 50MB 限制，已跳过` };
   }
 
   // Plain text formats
@@ -63,7 +63,7 @@ export function buildFileContext(results: ExtractResult[]): string {
   const valid = results.filter((r) => r.text.trim());
   if (valid.length === 0) return '';
 
-  const MAX_CHARS_EACH = 4000;
+  const MAX_CHARS_EACH = 15000;
   const parts = valid.map(
     (r) =>
       `【附件：${r.fileName}】\n${r.text.trim().slice(0, MAX_CHARS_EACH)}${

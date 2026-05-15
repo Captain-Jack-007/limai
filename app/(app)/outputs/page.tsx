@@ -408,7 +408,7 @@ function ReportView() {
               )}
             </div>
             <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              {zh ? '支持 PDF、Word、图片、TXT，每个最大 10MB' : 'PDF, Word, images, TXT — max 10 MB each'}
+              {zh ? '支持 PDF、Word、图片、TXT，每个最大 50MB' : 'PDF, Word, images, TXT — max 50 MB each'}
             </p>
           </div>
         </div>
@@ -761,7 +761,7 @@ function DeckView() {
                   {zh ? '点击上传或拖入文件' : 'Click to upload or drag and drop'}
                 </div>
                 <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {zh ? '支持 PDF、Word、TXT，最大 10MB' : 'PDF, Word, TXT — max 10 MB'}
+                  {zh ? '支持 PDF、Word、TXT，最大 50MB' : 'PDF, Word, TXT — max 50 MB'}
                 </div>
               </>
             )}

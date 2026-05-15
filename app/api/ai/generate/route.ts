@@ -132,16 +132,16 @@ export async function POST(req: NextRequest) {
     const fileContext = buildFileContext(fileResults);
     const fileWarnings = fileResults.filter((r) => r.warn).map((r) => r.warn as string);
 
-    // ── Serper search for competition section ─────────────────────────────────
+    // ── Tavily search for competition section ─────────────────────────────────
     let competitionContext = '';
     let searchCount = 0;
     if (sections.includes('competition')) {
-      const serperKey = process.env.SERPER_API_KEY;
-      if (serperKey && serperKey !== '待填写') {
+      const tavilyKey = process.env.TAVILY_API_KEY;
+      if (tavilyKey) {
         try {
           const projectName = String(projectInfo.name ?? '').trim() || String(projectInfo.summary ?? '').slice(0, 20);
           const industry = String(projectInfo.industry ?? '').trim();
-          const { results, count } = await searchCompetition(projectName, industry, serperKey);
+          const { results, count } = await searchCompetition(projectName, industry);
           competitionContext = buildCompetitionContext(results);
           searchCount = count;
         } catch {

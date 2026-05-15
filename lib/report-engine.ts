@@ -81,9 +81,9 @@ export async function runIntakeAgent(
 
 export async function runSearchAgent(
   intake: Record<string, unknown>,
-  serperApiKey: string,
 ): Promise<string> {
-  if (!serperApiKey || serperApiKey === '待填写') {
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  if (!tavilyKey) {
     return '（未配置搜索 API，跳过网络搜索）';
   }
 
@@ -91,16 +91,23 @@ export async function runSearchAgent(
 
   const searchPromises = queries.slice(0, 6).map(async (q) => {
     try {
-      const res = await fetch('https://google.serper.dev/search', {
+      const res = await fetch('https://api.tavily.com/search', {
         method: 'POST',
-        headers: { 'X-API-KEY': serperApiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: q.query, gl: 'cn', hl: 'zh-cn', num: 5 }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: tavilyKey,
+          query: q.query,
+          search_depth: 'advanced',
+          include_answer: false,
+          max_results: 5,
+        }),
         signal: AbortSignal.timeout(10000),
       });
+      if (!res.ok) return '';
       const data = await res.json();
-      const organic: Array<{ title: string; snippet?: string; link: string }> = data.organic || [];
-      return organic
-        .map((r) => '[搜索:' + q.type + '] ' + r.title + ' — ' + (r.snippet || '') + ' (' + r.link + ')')
+      const results: Array<{ title: string; content?: string; url: string }> = data.results ?? [];
+      return results
+        .map((r) => '[搜索:' + q.type + '] ' + r.title + ' — ' + (r.content ?? '') + ' (' + r.url + ')')
         .join('\n');
     } catch {
       return '';
@@ -194,16 +201,22 @@ export async function generateFullReport(
 ): Promise<{ content: string; projectName: string; warnings: string[] }> {
   const warnings: string[] = [];
 
+  // Truncate very large file texts to avoid token limit issues
+  const truncatedFileText =
+    fileText && fileText.length > 50000 ? fileText.substring(0, 15000) : fileText;
+  if (fileText && fileText.length > 50000) {
+    warnings.push(`文件内容较长（${Math.round(fileText.length / 1000)}K 字），已自动截取前 15000 字用于分析`);
+  }
+
   // Phase 1
-  const intake = await runIntakeAgent(userText, fileText);
+  const intake = await runIntakeAgent(userText, truncatedFileText);
   const finalProjectName = projectName || (intake.projectName as string) || '未命名项目';
   const intakeJson = JSON.stringify(intake, null, 2);
 
-  // Phase 2 (parallel with nothing else — Serper can be slow)
-  const serperKey = process.env.SERPER_API_KEY || '';
-  const searchContext = await runSearchAgent(intake, serperKey);
+  // Phase 2
+  const searchContext = await runSearchAgent(intake);
   if (searchContext.includes('未配置搜索')) {
-    warnings.push('未配置 Serper API，研报中竞品和市场数据将基于 AI 知识库生成');
+    warnings.push('未配置搜索 API，研报中竞品和市场数据将基于 AI 知识库生成');
   }
 
   // Phase 3: 5 groups in parallel, chapters within each group are serial

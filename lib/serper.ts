@@ -1,5 +1,5 @@
-// Serper API wrapper for real-time web search
-// https://serper.dev — set SERPER_API_KEY in .env.local
+// Web search via Tavily API
+// https://tavily.com — set TAVILY_API_KEY in .env.local
 
 export const COMPETITION_FORCE_PROMPT = `【强制输出要求——竞品分析，以下三部分不得跳过】
 
@@ -34,26 +34,33 @@ export interface SerperResult {
   date?: string;
 }
 
-const SERPER_URL = 'https://google.serper.dev/search';
+const TAVILY_URL = 'https://api.tavily.com/search';
 
-async function search(query: string, apiKey: string, num = 3): Promise<SerperResult[]> {
+async function search(query: string, num = 3): Promise<SerperResult[]> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return [];
   try {
-    const res = await fetch(SERPER_URL, {
+    const res = await fetch(TAVILY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': apiKey,
-      },
-      body: JSON.stringify({ q: query, num, hl: 'zh-cn', gl: 'cn' }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: 'advanced',
+        include_answer: false,
+        max_results: num,
+      }),
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return ((data.organic as SerperResult[]) ?? []).slice(0, num).map((r) => ({
+    const results: Array<{ title: string; content?: string; url: string; published_date?: string }> =
+      data.results ?? [];
+    return results.slice(0, num).map((r) => ({
       title: r.title,
-      snippet: r.snippet,
-      link: r.link,
-      date: r.date,
+      snippet: r.content ?? '',
+      link: r.url,
+      date: r.published_date,
     }));
   } catch {
     return [];
@@ -63,7 +70,7 @@ async function search(query: string, apiKey: string, num = 3): Promise<SerperRes
 export async function searchCompetition(
   projectName: string,
   industry: string,
-  apiKey: string
+  _apiKey?: string,
 ): Promise<{ results: SerperResult[]; count: number }> {
   const queries = [
     `${projectName} 竞争对手 融资 2025 2026`,
@@ -74,9 +81,8 @@ export async function searchCompetition(
 
   const all: SerperResult[] = [];
   for (const q of queries) {
-    const res = await search(q, apiKey, 3);
+    const res = await search(q, 3);
     for (const r of res) {
-      // deduplicate by link
       if (!all.find((x) => x.link === r.link)) all.push(r);
     }
     if (all.length >= 9) break;
@@ -91,12 +97,12 @@ export function buildCompetitionContext(results: SerperResult[]): string {
   const items = results
     .map(
       (r, i) =>
-        `[${i + 1}] ${r.title}${r.date ? `（${r.date}）` : ''}\n摘要：${r.snippet}\n来源：${r.link}`
+        `[${i + 1}] ${r.title}${r.date ? `（${r.date}）` : ''}\n摘要：${r.snippet}\n来源：${r.link}`,
     )
     .join('\n\n');
 
   return `\n\n---
-【联网搜索：竞品最新动态（${results.length} 条，来自 Google 搜索）】
+【联网搜索：竞品最新动态（${results.length} 条，来自 Tavily 搜索）】
 以下是实时搜索获取的竞品信息，请优先基于这些真实数据进行竞争格局分析。
 引用时必须注明来源URL，可信度按★★★★☆标注（权威媒体 / 企业官网）：
 

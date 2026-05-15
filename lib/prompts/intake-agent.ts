@@ -30,7 +30,7 @@ export const INTAKE_AGENT_SYSTEM_PROMPT = `你是赛乔（Sci-Bridge Agent）的
 export function buildIntakeUserPrompt(userText: string, fileText: string | null): string {
   let prompt = '';
   if (userText?.trim()) prompt += '## 用户输入\n\n' + userText + '\n\n';
-  if (fileText?.trim()) prompt += '## 上传文件提取文本（前10000字）\n\n' + fileText.substring(0, 10000) + '\n\n';
+  if (fileText?.trim()) prompt += '## 上传文件提取文本（前15000字）\n\n' + fileText.substring(0, 15000) + '\n\n';
   if (!userText?.trim() && !fileText?.trim()) prompt += '用户未提供任何信息。返回全部字段为 null 的 JSON。';
   return prompt;
 }
