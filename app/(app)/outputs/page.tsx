@@ -223,14 +223,21 @@ function ReportView() {
       uploadedFiles.forEach((f) => form.append('files', f));
 
       const res = await fetch('/api/ai/generate-full-report', { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? (zh ? '生成失败' : 'Generation failed'));
+      const rawText = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(rawText.slice(0, 200) || (zh ? '生成失败，请重试' : 'Generation failed'));
+      }
+      if (!res.ok) throw new Error((data.error as string) ?? (zh ? '生成失败' : 'Generation failed'));
 
-      const savedContent = data.content ?? '';
-      const savedName = data.projectName ?? (reportName.trim() || '未命名项目');
+      const savedContent = (data.content as string) ?? '';
+      const savedName = (data.projectName as string) ?? (reportName.trim() || '未命名项目');
       setFullContent(savedContent);
       setFullProjectName(savedName);
-      if (data.warnings?.length) setFullFileWarnings(data.warnings);
+      const warnings = data.warnings as string[] | undefined;
+      if (warnings?.length) setFullFileWarnings(warnings);
       setFullDone(true);
 
       try {
@@ -601,6 +608,17 @@ function ReportView() {
               <AlertCircle size={12} className="shrink-0" />{w}
             </div>
           ))}
+
+          {fullFileWarnings.length > 0 && (
+            <div
+              className="rounded-lg px-4 py-3 text-sm"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+            >
+              {zh
+                ? '注意：本报告部分数据基于 AI 知识库生成，建议核实标注为 [来源：AI 分析] 和 [来源：估算] 的内容。'
+                : 'Note: Some data in this report is AI-generated. Please verify content marked [Source: AI Analysis] or [Source: Estimate].'}
+            </div>
+          )}
 
           <div className="rounded-xl overflow-hidden glow-border" style={darkCard}>
             <div

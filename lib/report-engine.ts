@@ -28,8 +28,27 @@ async function callMiniMax(
       max_tokens: maxTokens,
     }),
   });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('MiniMax API error:', res.status, errText);
+    throw new Error('MiniMax API 错误: ' + res.status + ' ' + errText.slice(0, 200));
+  }
+
   const data = await res.json();
-  const content: string = data?.choices?.[0]?.message?.content || '';
+
+  if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
+    console.error('MiniMax app error:', data.base_resp);
+    throw new Error('MiniMax 服务错误: ' + data.base_resp.status_msg);
+  }
+
+  const choices = data?.choices;
+  if (!choices || choices.length === 0) {
+    console.error('MiniMax empty choices:', JSON.stringify(data).slice(0, 500));
+    throw new Error('MiniMax 返回空结果');
+  }
+
+  const content: string = choices[0]?.message?.content || '';
   return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
 
