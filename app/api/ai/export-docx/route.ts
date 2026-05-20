@@ -1,99 +1,377 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   AlignmentType,
+  Bookmark,
+  BorderStyle,
   Document,
+  ExternalHyperlink,
   HeadingLevel,
+  InternalHyperlink,
   LineRuleType,
   Packer,
+  PageBreak,
   Paragraph,
   Table,
   TableCell,
+  TableOfContents,
   TableRow,
   TextRun,
   WidthType,
-  BorderStyle,
 } from 'docx';
+import { renderInlineRuns, refBookmarkId, chapterBookmarkId } from '@/lib/docx-rendering';
 
-// ── 字号（half-points）─────────────────────────────────────────────────────────
-// 三号=16pt=32, 小三=15pt=30, 四号=14pt=28, 小四=12pt=24
-const SZ = { title: 32, h1: 30, h2: 28, h3: 24, body: 24, footer: 20 } as const;
+export const maxDuration = 120;
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Font sizes (half-points) ───────────────────────────────────────────────────
+const SZ = { title: 36, h1: 30, h2: 28, h3: 24, body: 24 } as const;
 
-function makeParagraph(
-  text: string,
-  opts: {
-    font?: string;
-    size?: number;
-    bold?: boolean;
-    align?: (typeof AlignmentType)[keyof typeof AlignmentType];
-    heading?: (typeof HeadingLevel)[keyof typeof HeadingLevel];
-    indent?: boolean;
-    spacing?: boolean;
-    color?: string;
-  } = {}
-): Paragraph {
-  const runs = splitTextRuns(text, opts.font ?? 'SimSun', opts.size ?? SZ.body, opts.bold, opts.color);
+// ── Route handler ──────────────────────────────────────────────────────────────
+
+export async function POST(req: NextRequest) {
+  try {
+    const { title, content } = (await req.json()) as { title?: string; content?: string };
+    if (!content?.trim()) {
+      return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
+    }
+
+    const elements = parseMarkdown(content);
+
+    const doc = new Document({
+      styles: {
+        default: {
+          document: {
+            run: { font: { name: 'Times New Roman', eastAsia: 'SimSun' }, size: SZ.body },
+            paragraph: { spacing: { line: 360, lineRule: LineRuleType.AUTO } },
+          },
+        },
+        paragraphStyles: [
+          {
+            id: 'Hyperlink',
+            name: 'Hyperlink',
+            basedOn: 'Normal',
+            next: 'Normal',
+            run: { color: '2858A0', underline: { type: 'single' } },
+          },
+        ],
+      },
+      sections: [
+        {
+          properties: {
+            page: {
+              margin: { top: 1800, bottom: 1800, left: 1800, right: 1800 },
+            },
+          },
+          children: elements,
+        },
+      ],
+    });
+
+    const buffer = Buffer.from(await Packer.toBuffer(doc));
+    const name = (title || '研报').replace(/[\\/:*?"<>|]/g, '');
+    const encoded = encodeURIComponent(`${name}.docx`);
+
+    return new NextResponse(buffer.buffer as ArrayBuffer, {
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encoded}`,
+      },
+    });
+  } catch (err: unknown) {
+    console.error('export-docx error:', err);
+    const msg = err instanceof Error ? err.message : 'Word 文档生成失败';
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+// ── Markdown parser ────────────────────────────────────────────────────────────
+
+type DocElement = Paragraph | Table;
+
+function parseMarkdown(md: string): DocElement[] {
+  const elements: DocElement[] = [];
+  const lines = md.split('\n');
+  let i = 0;
+  let h1Counter = 0; // for chapter bookmarks
+  let inRefSection = false;
+
+  // Prepend TOC after the cover title — we insert it when we see the first H1
+  let tocInserted = false;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // ── Table ──────────────────────────────────────────────────────────────────
+    if (trimmed.startsWith('|') && i + 1 < lines.length && lines[i + 1].includes('---')) {
+      let end = i;
+      while (end < lines.length && lines[end].trim().startsWith('|')) end++;
+      const tbl = makeTable(lines.slice(i, end).join('\n'));
+      if (tbl) elements.push(tbl);
+      i = end;
+      continue;
+    }
+
+    // ── H1 ────────────────────────────────────────────────────────────────────
+    if (/^# /.test(line)) {
+      const text = line.replace(/^# /, '').trim();
+      // Cover title
+      elements.push(
+        new Paragraph({
+          heading: HeadingLevel.TITLE,
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 480, after: 480 },
+          children: [
+            new TextRun({
+              text,
+              font: { name: 'Times New Roman', eastAsia: 'SimHei' },
+              size: SZ.title,
+              bold: true,
+            }),
+          ],
+        }),
+      );
+      // Insert TOC once after cover title
+      if (!tocInserted) {
+        elements.push(buildToc());
+        elements.push(new Paragraph({ children: [new PageBreak()] }));
+        tocInserted = true;
+      }
+      i++;
+      continue;
+    }
+
+    // ── H2 (chapter headings) ─────────────────────────────────────────────────
+    if (/^## /.test(line)) {
+      const text = line.replace(/^## /, '').trim();
+      h1Counter++;
+      inRefSection = text.includes('参考文献');
+      elements.push(buildH2(text, h1Counter));
+      i++;
+      continue;
+    }
+
+    // ── H3 ────────────────────────────────────────────────────────────────────
+    if (/^### /.test(line)) {
+      const text = line.replace(/^### /, '').trim();
+      elements.push(buildH3(text));
+      i++;
+      continue;
+    }
+
+    // ── H4 ────────────────────────────────────────────────────────────────────
+    if (/^#### /.test(line)) {
+      const text = line.replace(/^#### /, '').trim();
+      elements.push(
+        new Paragraph({
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 200, after: 100 },
+          children: [
+            new TextRun({
+              text,
+              font: { name: 'Times New Roman', eastAsia: 'SimHei' },
+              size: SZ.h3,
+              bold: true,
+            }),
+          ],
+        }),
+      );
+      i++;
+      continue;
+    }
+
+    // ── Horizontal rule ────────────────────────────────────────────────────────
+    if (/^---+$/.test(trimmed)) {
+      elements.push(new Paragraph({ children: [], spacing: { before: 120, after: 120 } }));
+      i++;
+      continue;
+    }
+
+    // ── Empty line ─────────────────────────────────────────────────────────────
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // ── Reference list item: `1. **[TYPE]** title <url>` ─────────────────────
+    if (inRefSection) {
+      const refPara = buildRefParagraph(trimmed);
+      if (refPara) {
+        elements.push(refPara);
+        i++;
+        continue;
+      }
+    }
+
+    // ── Regular paragraph ──────────────────────────────────────────────────────
+    elements.push(
+      new Paragraph({
+        spacing: { line: 360, lineRule: LineRuleType.AUTO, after: 120 },
+        indent: { firstLine: 480 },
+        children: renderInlineRuns(trimmed),
+      }),
+    );
+    i++;
+  }
+
+  return elements;
+}
+
+// ── TOC ───────────────────────────────────────────────────────────────────────
+
+function buildToc(): Paragraph {
   return new Paragraph({
-    heading: opts.heading,
-    alignment: opts.align ?? AlignmentType.JUSTIFIED,
-    indent: opts.indent ? { firstLine: 480 } : undefined,
-    spacing: opts.spacing
-      ? { line: 360, lineRule: LineRuleType.AUTO, before: 80, after: 80 }
-      : { before: 60, after: 60 },
-    children: runs,
+    children: [
+      new TableOfContents('目录', {
+        hyperlink: true,
+        headingStyleRange: '1-3',
+      }) as unknown as TextRun,
+    ],
   });
 }
 
-// Split text so Chinese chars use SimSun/SimHei and Latin chars use Times New Roman
-function splitTextRuns(
+// ── Heading builders ──────────────────────────────────────────────────────────
+
+function buildH2(text: string, chapterIndex: number): Paragraph {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_1,
+    spacing: { before: 360, after: 240 },
+    children: [
+      new Bookmark({
+        id: chapterBookmarkId(chapterIndex),
+        children: [
+          new TextRun({
+            text,
+            font: { name: 'Times New Roman', eastAsia: 'SimHei' },
+            size: SZ.h1,
+            bold: true,
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+function buildH3(text: string): Paragraph {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    spacing: { before: 240, after: 120 },
+    children: [
+      new TextRun({
+        text,
+        font: { name: 'Times New Roman', eastAsia: 'SimHei' },
+        size: SZ.h2,
+        bold: true,
+      }),
+    ],
+  });
+}
+
+// ── Reference paragraph ───────────────────────────────────────────────────────
+
+/**
+ * Expected formats (from formatReferences()):
+ *   1. **[PAPER]** Title (2024) <https://url>
+ *   2. **[NEWS]** Title <https://url>
+ *   1. **[PAPER]** Title (2024)   (no URL)
+ */
+function buildRefParagraph(text: string): Paragraph | null {
+  // Must start with a number + dot
+  const numMatch = text.match(/^(\d+)\.\s+(.*)$/);
+  if (!numMatch) return null;
+
+  const num = Number(numMatch[1]);
+  const rest = numMatch[2];
+
+  const children: (TextRun | Bookmark | ExternalHyperlink | InternalHyperlink)[] = [];
+
+  // Number as bookmark anchor
+  children.push(
+    new Bookmark({
+      id: refBookmarkId(num),
+      children: [
+        new TextRun({ text: `${num}.`, bold: true }),
+      ],
+    }) as unknown as TextRun,
+  );
+  children.push(new TextRun({ text: ' ' }));
+
+  // Strip **[TYPE]** prefix
+  const typeMatch = rest.match(/^\*\*\[([^\]]+)\]\*\*\s*/);
+  if (typeMatch) {
+    children.push(new TextRun({ text: `[${typeMatch[1]}] `, bold: true, color: '555555' }));
+  }
+  const afterType = typeMatch ? rest.slice(typeMatch[0].length) : rest;
+
+  // Extract trailing URL in angle brackets <url>
+  const urlMatch = afterType.match(/<(https?:\/\/[^>]+)>\s*$/);
+  const mainText = urlMatch ? afterType.slice(0, urlMatch.index).trim() : afterType.trim();
+  const url = urlMatch?.[1];
+
+  if (mainText) {
+    if (url) {
+      // Title is a clickable link
+      children.push(
+        new ExternalHyperlink({
+          link: url,
+          children: [new TextRun({ text: mainText, style: 'Hyperlink' })],
+        }) as unknown as TextRun,
+      );
+    } else {
+      pushSplitRunsInto(children, mainText);
+    }
+  }
+
+  return new Paragraph({
+    spacing: { after: 80 },
+    children: children as unknown as TextRun[],
+  });
+}
+
+function pushSplitRunsInto(
+  acc: (TextRun | Bookmark | ExternalHyperlink | InternalHyperlink)[],
   text: string,
-  cnFont: string,
-  size: number,
   bold?: boolean,
-  color?: string
-): TextRun[] {
-  if (!text) return [new TextRun({ text: '', size, bold })];
-
-  // Match runs of CJK vs non-CJK
+): void {
   const segments = text.split(/(?=[^一-鿿　-〿＀-￯])|(?<=[^一-鿿　-〿＀-￯])/);
-  const runs: TextRun[] = [];
-
   for (const seg of segments) {
     if (!seg) continue;
     const isCJK = /[一-鿿　-〿＀-￯]/.test(seg);
-    runs.push(
-      new TextRun({
-        text: seg,
-        font: isCJK ? cnFont : 'Times New Roman',
-        size,
-        bold,
-        color,
-      })
+    acc.push(
+      new TextRun({ text: seg, font: isCJK ? 'SimSun' : 'Times New Roman', bold }),
     );
   }
-  return runs.length > 0 ? runs : [new TextRun({ text, font: cnFont, size, bold })];
 }
 
-function makeTableFromMd(mdTable: string): Table | null {
-  const lines = mdTable.trim().split('\n').filter((l) => l.trim());
-  if (lines.length < 2) return null;
+// ── Table builder ─────────────────────────────────────────────────────────────
+
+function makeTable(mdTable: string): Table | null {
+  const rows = mdTable
+    .trim()
+    .split('\n')
+    .filter((l) => l.trim() && !l.match(/^\|[\s|:-]+\|$/));
+
+  if (rows.length < 1) return null;
 
   const parseRow = (line: string) =>
     line
       .split('|')
       .map((c) => c.trim())
-      .filter((c) => c.length > 0);
-
-  const headerCells = parseRow(lines[0]);
-  const dataRows = lines.slice(2); // skip separator
+      .filter((c, idx, arr) => idx > 0 && idx < arr.length - 1); // drop first/last empty
 
   const makeCell = (text: string, isHeader = false): TableCell =>
     new TableCell({
       children: [
         new Paragraph({
-          children: splitTextRuns(text, isHeader ? 'SimHei' : 'SimSun', SZ.body, isHeader),
           alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text,
+              font: { name: 'Times New Roman', eastAsia: isHeader ? 'SimHei' : 'SimSun' },
+              size: SZ.body,
+              bold: isHeader,
+            }),
+          ],
         }),
       ],
       borders: {
@@ -104,207 +382,9 @@ function makeTableFromMd(mdTable: string): Table | null {
       },
     });
 
-  const rows: TableRow[] = [
-    new TableRow({ children: headerCells.map((c) => makeCell(c, true)) }),
-    ...dataRows.map(
-      (row) => new TableRow({ children: parseRow(row).map((c) => makeCell(c)) })
-    ),
-  ];
+  const tableRows: TableRow[] = rows.map((row, idx) =>
+    new TableRow({ children: parseRow(row).map((c) => makeCell(c, idx === 0)) }),
+  );
 
-  return new Table({
-    rows,
-    width: { size: 100, type: WidthType.PERCENTAGE },
-  });
-}
-
-// ── Markdown → docx elements ───────────────────────────────────────────────────
-
-function parseMarkdown(md: string): (Paragraph | Table)[] {
-  const elements: (Paragraph | Table)[] = [];
-  const lines = md.split('\n');
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Table detection (line starts with |)
-    if (line.trim().startsWith('|') && i + 1 < lines.length && lines[i + 1].includes('---')) {
-      let tableEnd = i;
-      while (tableEnd < lines.length && lines[tableEnd].trim().startsWith('|')) {
-        tableEnd++;
-      }
-      const tableMd = lines.slice(i, tableEnd).join('\n');
-      const tbl = makeTableFromMd(tableMd);
-      if (tbl) elements.push(tbl);
-      i = tableEnd;
-      continue;
-    }
-
-    // H1 - document title
-    if (/^# /.test(line)) {
-      const text = line.replace(/^# /, '').trim();
-      elements.push(
-        makeParagraph(text, {
-          font: 'SimHei',
-          size: SZ.title,
-          bold: true,
-          align: AlignmentType.CENTER,
-          heading: HeadingLevel.TITLE,
-          spacing: true,
-        })
-      );
-      i++;
-      continue;
-    }
-
-    // H2 - chapter headings (第X章)
-    if (/^## /.test(line)) {
-      const text = line.replace(/^## /, '').trim();
-      elements.push(
-        makeParagraph(text, {
-          font: 'SimHei',
-          size: SZ.h1,
-          bold: true,
-          heading: HeadingLevel.HEADING_1,
-          spacing: true,
-        })
-      );
-      i++;
-      continue;
-    }
-
-    // H3 - section headings (1.1 format)
-    if (/^### /.test(line)) {
-      const text = line.replace(/^### /, '').trim();
-      elements.push(
-        makeParagraph(text, {
-          font: 'SimHei',
-          size: SZ.h2,
-          bold: true,
-          heading: HeadingLevel.HEADING_2,
-          spacing: true,
-        })
-      );
-      i++;
-      continue;
-    }
-
-    // H4 - sub-section headings (1.1.1 format)
-    if (/^#### /.test(line)) {
-      const text = line.replace(/^#### /, '').trim();
-      elements.push(
-        makeParagraph(text, {
-          font: 'SimHei',
-          size: SZ.h3,
-          bold: true,
-          heading: HeadingLevel.HEADING_3,
-          spacing: true,
-        })
-      );
-      i++;
-      continue;
-    }
-
-    // Horizontal rule
-    if (/^---+$/.test(line.trim())) {
-      elements.push(new Paragraph({ children: [], spacing: { before: 120, after: 120 } }));
-      i++;
-      continue;
-    }
-
-    // Bold line (metadata like **报告日期：...**)
-    if (/^\*\*[^*]+\*\*$/.test(line.trim())) {
-      const text = line.trim().replace(/^\*\*|\*\*$/g, '');
-      elements.push(
-        makeParagraph(text, { font: 'SimHei', size: SZ.body, bold: true, spacing: true })
-      );
-      i++;
-      continue;
-    }
-
-    // Empty line
-    if (!line.trim()) {
-      i++;
-      continue;
-    }
-
-    // Regular paragraph - strip markdown inline formatting
-    const text = line
-      .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold**
-      .replace(/\*([^*]+)\*/g, '$1')       // *italic*
-      .replace(/`([^`]+)`/g, '$1')         // `code`
-      .trim();
-
-    if (text) {
-      elements.push(
-        makeParagraph(text, {
-          font: 'SimSun',
-          size: SZ.body,
-          indent: true,
-          spacing: true,
-        })
-      );
-    }
-    i++;
-  }
-
-  return elements;
-}
-
-// ── Route handler ──────────────────────────────────────────────────────────────
-
-export async function POST(req: NextRequest) {
-  try {
-    const { title, content } = await req.json();
-    if (!content?.trim()) {
-      return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
-    }
-
-    const elements = parseMarkdown(content);
-
-    const doc = new Document({
-      sections: [
-        {
-          properties: {
-            page: {
-              margin: {
-                top: 1800,    // ~3.17cm
-                bottom: 1800,
-                left: 1800,   // ~3.17cm
-                right: 1800,
-              },
-            },
-          },
-          children: elements,
-        },
-      ],
-      styles: {
-        default: {
-          document: {
-            run: {
-              font: 'SimSun',
-              size: SZ.body,
-            },
-            paragraph: {
-              spacing: { line: 360, lineRule: LineRuleType.AUTO },
-            },
-          },
-        },
-      },
-    });
-
-    const buffer = Buffer.from(await Packer.toBuffer(doc));
-    const name = (title || '项目研究报告').replace(/[\\/:*?"<>|]/g, '');
-    const encoded = encodeURIComponent(`${name}.docx`);
-
-    return new NextResponse(buffer.buffer as ArrayBuffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename*=UTF-8''${encoded}`,
-      },
-    });
-  } catch (err) {
-    console.error('export-docx error:', err);
-    return NextResponse.json({ error: 'Word 文档生成失败，请重试' }, { status: 500 });
-  }
+  return new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } });
 }

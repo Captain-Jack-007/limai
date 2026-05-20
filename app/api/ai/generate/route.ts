@@ -114,8 +114,16 @@ export async function POST(req: NextRequest) {
       if (!piRaw || !secRaw) {
         return NextResponse.json({ error: '参数缺失' }, { status: 400 });
       }
-      projectInfo = JSON.parse(piRaw as string);
-      sections = JSON.parse(secRaw as string);
+      try {
+        projectInfo = JSON.parse(piRaw as string);
+      } catch {
+        return NextResponse.json({ error: 'projectInfo 不是合法 JSON' }, { status: 400 });
+      }
+      try {
+        sections = JSON.parse(secRaw as string);
+      } catch {
+        return NextResponse.json({ error: 'sections 不是合法 JSON' }, { status: 400 });
+      }
       uploadedFiles = form.getAll('files') as File[];
     } else {
       const body = await req.json();

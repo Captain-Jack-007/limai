@@ -141,6 +141,12 @@ function ReportView() {
   const [fullFileWarnings, setFullFileWarnings] = useState<string[]>([]);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [fullSkepticSummary, setFullSkepticSummary] = useState<{
+    total: number; high: number; medium: number; low: number; disputed: number;
+  } | null>(null);
+  const [fullEditorStats, setFullEditorStats] = useState<{ skippedSteps: string[] } | null>(null);
+  const [fullEvidenceCount, setFullEvidenceCount] = useState<number | null>(null);
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 
@@ -213,6 +219,9 @@ function ReportView() {
     setElapsed(0);
     setExportError('');
     setFullFileWarnings([]);
+    setFullSkepticSummary(null);
+    setFullEditorStats(null);
+    setFullEvidenceCount(null);
 
     try {
       const form = new FormData();
@@ -238,6 +247,9 @@ function ReportView() {
       setFullProjectName(savedName);
       const warnings = data.warnings as string[] | undefined;
       if (warnings?.length) setFullFileWarnings(warnings);
+      if (data.skepticSummary) setFullSkepticSummary(data.skepticSummary as typeof fullSkepticSummary);
+      if (data.editorStats) setFullEditorStats(data.editorStats as typeof fullEditorStats);
+      if (typeof data.evidenceCount === 'number') setFullEvidenceCount(data.evidenceCount);
       setFullDone(true);
 
       try {
@@ -594,6 +606,44 @@ function ReportView() {
               {zh ? (isExporting ? '导出中…' : '导出 Word') : (isExporting ? 'Exporting…' : 'Export Word')}
             </button>
           </div>
+
+          {/* Content provenance panel */}
+          {fullSkepticSummary && (
+            <div style={{
+              padding: '12px 16px',
+              background: 'rgba(234, 179, 8, 0.08)',
+              border: '1px solid rgba(234, 179, 8, 0.25)',
+              borderRadius: '12px',
+              fontSize: '13px',
+              color: 'rgba(255, 255, 255, 0.8)',
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#eab308', fontSize: '13px' }}>
+                本研报内容溯源
+              </div>
+              <ul style={{ margin: '0 0 0 16px', padding: 0, lineHeight: 1.8 }}>
+                <li>共 {fullSkepticSummary.total} 条事实性声明</li>
+                {fullEvidenceCount !== null && fullEvidenceCount > 0 && (
+                  <li>{fullEvidenceCount} 条公开来源参考（详见文末"参考来源"章节）</li>
+                )}
+                <li>{fullSkepticSummary.low} 条 AI 推断（已用 [推断] 显式标记）</li>
+                {fullSkepticSummary.disputed > 0 && (
+                  <li>{fullSkepticSummary.disputed} 条存在分歧（详见附录"跨章矛盾"）</li>
+                )}
+              </ul>
+              <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
+                AI 推断声明已显式标注，建议结合公开来源核实。
+              </p>
+              {fullFileWarnings.length > 0 && (
+                <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                  <ul style={{ margin: '0 0 0 16px', padding: 0 }}>
+                    {fullFileWarnings.map((w, i) => (
+                      <li key={i} style={{ color: 'rgba(255,255,255,0.55)', fontSize: '12px' }}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           {exportError && (
             <div className="flex items-center gap-2 text-sm rounded-xl px-4 py-3"

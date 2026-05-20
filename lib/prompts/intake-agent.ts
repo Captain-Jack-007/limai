@@ -25,7 +25,12 @@ export const INTAKE_AGENT_SYSTEM_PROMPT = `你是赛乔（Sci-Bridge Agent）的
 - 即使用户只写了一个项目名，也要用你的知识推断尽可能多的字段
 - estimatedTRL、competitorKeywords、academicKeywords 是必填的
 - 不要编造具体数据（专利数、论文数），只提取用户明确说的
-- 严格输出 JSON，不要任何前缀后缀`;
+- 严格输出 JSON，不要任何前缀后缀
+
+## 关键词数量硬性限制
+- competitorKeywords：最多 5 个，必须是与项目最直接竞争的对手或竞品名称（中文优先，英文最多 2 个）
+- academicKeywords：最多 3 个，必须是项目最核心的英文学术检索词
+【绝对禁止】不要堆砌关键词，不要把泛词（如"人工智能"、"新能源"、"advanced technology"）放进 keywords`;
 
 export function buildIntakeUserPrompt(userText: string, fileText: string | null): string {
   let prompt = '';

@@ -29,12 +29,13 @@ export async function extractFileText(file: File): Promise<ExtractResult> {
 
   const buf = Buffer.from(await file.arrayBuffer());
 
-  // PDF
+  // PDF — pdf-parse v1 API: pdf(buffer) → { text }
+  // (v2 was removed: it depends on pdf.js worker which Next.js server bundler cannot resolve)
   if (lower.endsWith('.pdf')) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require('pdf-parse');
-      const result = await pdfParse(buf);
+      const pdf = require('pdf-parse');
+      const result = await pdf(buf);
       if (!result.text?.trim()) {
         return { fileName: name, text: '', warn: `PDF "${name}" 未检测到可读文字（可能是扫描件），已跳过` };
       }
