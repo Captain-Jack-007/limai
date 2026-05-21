@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import PptxGenJS from 'pptxgenjs';
+import { getSlidePrompt, buildOutlineSystem, buildOutlineUser } from '@/lib/prompts/ppt-agent';
+
+export const maxDuration = 300;
 
 const MINIMAX_API_URL = 'https://api.minimaxi.com/v1/chat/completions';
 const MINIMAX_MODEL = 'MiniMax-M2.5-highspeed';
@@ -94,185 +97,32 @@ async function extractText(file: File): Promise<string> {
   throw new Error(`不支持的文件格式：${file.name.split('.').pop()?.toUpperCase()}`);
 }
 
-// ── MiniMax outline generation ─────────────────────────────────────────────────
+// ── Two-phase PPT generation ───────────────────────────────────────────────────
 
-async function generateOutline(text: string, apiKey: string): Promise<PptOutline> {
-  const truncated = text.slice(0, MAX_TEXT_CHARS);
+const MAX_CONCURRENCY = 4;
 
-  const systemPrompt = '你是一位顶级投资路演顾问，擅长从商业计划书中提炼核心信息并生成结构化PPT大纲。你只输出JSON，不包含任何解释文字。';
-
-  const userPrompt = `分析以下商业计划书，生成12-14页专业路演PPT大纲。
-
-【商业计划书内容】
-${truncated}
-
-【输出要求】
-严格输出如下JSON（不要有任何额外文字或markdown代码块标记）：
-
-{
-  "project_name": "项目名称",
-  "tagline": "一句话核心价值主张（20字内）",
-  "slides": [
-    {
-      "index": 1,
-      "slide_type": "cover",
-      "title": "项目名称",
-      "subtitle": "核心价值主张",
-      "tagline": "所在行业 · 融资轮次",
-      "notes": "演讲者开场白建议"
-    },
-    {
-      "index": 2,
-      "slide_type": "painpoints",
-      "title": "痛点与问题",
-      "cards": [
-        { "icon": "!", "title": "痛点一标题", "body": "描述15-25字", "stat": "数据指标如：市场损失$500B" },
-        { "icon": "!", "title": "痛点二标题", "body": "描述15-25字", "stat": "数据指标" },
-        { "icon": "!", "title": "痛点三标题", "body": "描述15-25字", "stat": "数据指标" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 3,
-      "slide_type": "solution",
-      "title": "我们的解决方案",
-      "body": "核心解决方案描述，2-3句话，60字以内",
-      "cards": [
-        { "title": "核心特性一", "body": "描述20字" },
-        { "title": "核心特性二", "body": "描述20字" },
-        { "title": "核心特性三", "body": "描述20字" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 4,
-      "slide_type": "market",
-      "title": "市场规模",
-      "metrics": [
-        { "label": "TAM 总可寻址市场", "value": "1.2", "unit": "万亿元" },
-        { "label": "SAM 可服务市场", "value": "3500", "unit": "亿元" },
-        { "label": "SOM 可获取市场", "value": "350", "unit": "亿元" }
-      ],
-      "chart_values": [
-        { "label": "TAM", "value": 1200 },
-        { "label": "SAM", "value": 350 },
-        { "label": "SOM", "value": 35 }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 5,
-      "slide_type": "traction",
-      "title": "关键牵引数据",
-      "metrics": [
-        { "label": "注册用户", "value": "12万", "unit": "+" },
-        { "label": "月活跃用户", "value": "3.8万", "unit": "" },
-        { "label": "年收入增长", "value": "240", "unit": "%" },
-        { "label": "客户留存率", "value": "91", "unit": "%" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 6,
-      "slide_type": "business_model",
-      "title": "商业模式",
-      "cards": [
-        { "title": "收入模式一", "body": "描述20字" },
-        { "title": "收入模式二", "body": "描述20字" },
-        { "title": "收入模式三", "body": "描述20字" }
-      ],
-      "chart_values": [
-        { "label": "订阅收入", "value": 55 },
-        { "label": "交易佣金", "value": 25 },
-        { "label": "增值服务", "value": 20 }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 7,
-      "slide_type": "competition",
-      "title": "竞争优势",
-      "cards": [
-        { "icon": "★", "title": "优势一", "body": "描述25字" },
-        { "icon": "★", "title": "优势二", "body": "描述25字" },
-        { "icon": "★", "title": "优势三", "body": "描述25字" },
-        { "icon": "★", "title": "优势四", "body": "描述25字" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 8,
-      "slide_type": "team",
-      "title": "核心团队",
-      "members": [
-        { "name": "姓名", "role": "CEO · 创始人", "bio": "背景描述，25字以内" },
-        { "name": "姓名", "role": "CTO · 联合创始人", "bio": "背景描述，25字以内" },
-        { "name": "姓名", "role": "COO", "bio": "背景描述，25字以内" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 9,
-      "slide_type": "finance",
-      "title": "财务预测",
-      "chart_values": [
-        { "label": "2023", "value": 500 },
-        { "label": "2024", "value": 1200 },
-        { "label": "2025E", "value": 3500 },
-        { "label": "2026E", "value": 8000 }
-      ],
-      "metrics": [
-        { "label": "毛利率", "value": "68", "unit": "%" },
-        { "label": "盈亏平衡", "value": "2025Q3", "unit": "" },
-        { "label": "LTV/CAC", "value": "8.5", "unit": "x" }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 10,
-      "slide_type": "roadmap",
-      "title": "发展路线图",
-      "milestones": [
-        { "quarter": "2024 Q1", "title": "已完成的里程碑", "done": true },
-        { "quarter": "2024 Q3", "title": "已完成的里程碑", "done": true },
-        { "quarter": "2025 Q1", "title": "进行中", "done": false },
-        { "quarter": "2025 Q3", "title": "计划目标", "done": false },
-        { "quarter": "2026 Q1", "title": "长期目标", "done": false }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 11,
-      "slide_type": "investment",
-      "title": "融资计划",
-      "ask_amount": "5000万元",
-      "body": "Pre-A 轮 · 股权融资",
-      "ask_use": [
-        { "label": "产品研发", "value": 40 },
-        { "label": "市场推广", "value": 30 },
-        { "label": "团队扩张", "value": 20 },
-        { "label": "运营储备", "value": 10 }
-      ],
-      "notes": "演讲者讲解要点"
-    },
-    {
-      "index": 12,
-      "slide_type": "contact",
-      "title": "项目名称",
-      "subtitle": "核心价值主张",
-      "contact_name": "联系人姓名",
-      "contact_email": "email@example.com",
-      "contact_website": "www.example.com",
-      "notes": "演讲者结束语建议"
-    }
-  ]
+interface OutlineSlot {
+  index: number;
+  slide_type: PptSlide['slide_type'];
+  title: string;
+  focus: string;
 }
 
-【注意】所有数字和数据必须从文档中提取，不可虚构。若文档缺少某项数据，使用合理的行业参考数据并标注(E)。`;
+interface OutlineSchema {
+  project_name: string;
+  tagline: string;
+  slides: OutlineSlot[];
+}
 
+async function callMiniMax(
+  systemPrompt: string,
+  userContent: string,
+  maxTokens: number,
+  timeoutMs: number,
+  apiKey: string,
+): Promise<string> {
   const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), 120000);
-
+  const tid = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(MINIMAX_API_URL, {
@@ -282,29 +132,86 @@ ${truncated}
         model: MINIMAX_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          { role: 'user', content: userContent },
         ],
-        max_tokens: 8000,
+        max_tokens: maxTokens,
       }),
       signal: controller.signal,
     });
   } finally {
     clearTimeout(tid);
   }
-
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`MiniMax HTTP ${response.status}: ${err}`);
+    throw new Error(`MiniMax HTTP ${response.status}: ${err.slice(0, 200)}`);
   }
-
   const data = await response.json();
   if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
     throw new Error(`MiniMax: ${data.base_resp.status_msg}`);
   }
-
   const raw = data.choices?.[0]?.message?.content ?? '';
-  const cleaned = stripThinking(raw);
-  return JSON.parse(extractJson(cleaned)) as PptOutline;
+  return stripThinking(raw);
+}
+
+async function generateOutline(text: string, fileName: string, apiKey: string): Promise<OutlineSchema> {
+  const truncated = text.slice(0, MAX_TEXT_CHARS);
+  const system = buildOutlineSystem();
+  const user = buildOutlineUser(truncated, fileName);
+  const raw = await callMiniMax(system, user, 2000, 45000, apiKey);
+  return JSON.parse(extractJson(raw)) as OutlineSchema;
+}
+
+async function generateSlide(
+  entry: OutlineSlot,
+  fullText: string,
+  projectName: string,
+  apiKey: string,
+): Promise<PptSlide> {
+  const { system, user } = getSlidePrompt(entry.slide_type, {
+    index: entry.index,
+    slideType: entry.slide_type,
+    projectName,
+    fullText: fullText.slice(0, MAX_TEXT_CHARS),
+    focus: entry.focus,
+    title: entry.title,
+  });
+  const raw = await callMiniMax(system, user, 1500, 60000, apiKey);
+  const parsed = JSON.parse(extractJson(raw)) as Partial<PptSlide>;
+  return {
+    ...parsed,
+    index: entry.index,
+    slide_type: entry.slide_type,
+    title: parsed.title ?? entry.title,
+  } as PptSlide;
+}
+
+function fallbackSlide(entry: OutlineSlot): PptSlide {
+  return {
+    index: entry.index,
+    slide_type: entry.slide_type,
+    title: entry.title,
+    body: entry.focus,
+  };
+}
+
+async function runWithConcurrency<T>(
+  tasks: (() => Promise<T>)[],
+  concurrency: number,
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
+  let next = 0;
+  async function worker() {
+    while (next < tasks.length) {
+      const i = next++;
+      try {
+        results[i] = { status: 'fulfilled', value: await tasks[i]() };
+      } catch (err) {
+        results[i] = { status: 'rejected', reason: err };
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  return results;
 }
 
 // ── Shared slide chrome ────────────────────────────────────────────────────────
@@ -893,18 +800,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '文件内容为空，请检查文件后重试' }, { status: 400 });
     }
 
-    let outline: PptOutline;
+    // Phase 1: slim structural outline (45 s / 2000 tokens)
+    let slimOutline: OutlineSchema;
     try {
-      outline = await generateOutline(text, apiKey);
+      slimOutline = await generateOutline(text, file.name, apiKey);
     } catch (e) {
       return NextResponse.json(
         { error: `AI 分析失败：${e instanceof Error ? e.message : '未知错误'}` },
         { status: 502 }
       );
     }
-    if (!outline.slides?.length) {
+    if (!slimOutline.slides?.length) {
       return NextResponse.json({ error: 'AI 未生成有效的PPT大纲，请重试' }, { status: 502 });
     }
+    console.log('[PPT] Outline done:', slimOutline.slides.length, 'slides');
+
+    // Phase 2: generate each slide in parallel (MAX_CONCURRENCY=4, 60 s each)
+    const slideTasks = slimOutline.slides.map((entry) => () =>
+      generateSlide(entry, text, slimOutline.project_name, apiKey)
+    );
+    const settled = await runWithConcurrency(slideTasks, MAX_CONCURRENCY);
+    const warnings: number[] = [];
+    const slides: PptSlide[] = settled.map((r, i) => {
+      if (r.status === 'fulfilled') return r.value;
+      console.warn(`[PPT] Slide ${slimOutline.slides[i].index} (${slimOutline.slides[i].slide_type}) failed:`, r.reason);
+      warnings.push(slimOutline.slides[i].index);
+      return fallbackSlide(slimOutline.slides[i]);
+    });
+
+    const outline: PptOutline = {
+      project_name: slimOutline.project_name,
+      tagline: slimOutline.tagline,
+      slides,
+    };
 
     const pptx = buildPptx(outline);
     const arrayBuffer = (await pptx.write({ outputType: 'arraybuffer' })) as ArrayBuffer;
@@ -916,6 +844,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
         'Content-Disposition': `attachment; filename*=UTF-8''${encoded}`,
+        'X-Generation-Warnings': JSON.stringify(warnings),
       },
     });
   } catch (e) {
